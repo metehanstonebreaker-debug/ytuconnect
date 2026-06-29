@@ -6,71 +6,188 @@
 import { Post, Exam, Club } from './types';
 
 export const DEPARTMENTS = [
+  // Eğitim Fakültesi
+  "Bilgisayar ve Öğretim Tek. Öğretmenliği",
+  "Sınıf Öğretmenliği",
+  "Eğitim Bilimleri Bölümü",
+  "Sosyal Bilgiler Öğretmenliği",
+  "Fen Bilgisi Öğretmenliği",
+  "Türkçe Öğretmenliği",
+  "İlköğretim Matematik Öğretmenliği",
+  "İngilizce Öğretmenliği",
+  "Okul Öncesi Öğretmenliği",
+
+  // Elektrik-Elektronik Fakültesi
   "Bilgisayar Mühendisliği",
-  "Endüstri Mühendisliği",
-  "Makine Mühendisliği",
-  "Mimarlık",
-  "İnşaat Mühendisliği",
-  "Kimya Mühendisliği",
+  "Elektronik ve Haberleşme Mühendisliği",
+  "Biyomedikal Mühendisliği",
   "Kontrol ve Otomasyon Mühendisliği",
-  "Matematik Mühendisliği",
-  "İşletme",
   "Elektrik Mühendisliği",
+
+  // Fen Edebiyat Fakültesi
+  "Batı Dilleri ve Edebiyatları",
+  "Kimya",
+  "Moleküler Biyoloji ve Genetik Bölümü",
+  "Matematik",
+  "Fizik",
+  "Türk Dili ve Edebiyatı",
+  "İstatistik",
+  "İnsan ve Toplum Bilimleri",
+
+  // Gemi İnşaatı ve Denizcilik Fakültesi
   "Gemi İnşaatı ve Gemi Makineleri Mühendisliği",
-  "Metalurji ve Malzeme Mühendisliği"
+  "Gemi Makineleri İşletme Mühendisliği",
+
+  // İktisadi ve İdari Bilimler Fakültesi
+  "İktisat",
+  "Siyaset Bilimi ve Uluslararası İlişkiler",
+  "İşletme",
+
+  // İnşaat Fakültesi
+  "İnşaat Mühendisliği",
+  "Çevre Mühendisliği",
+  "Harita Mühendisliği",
+
+  // Kimya-Metalurji Fakültesi
+  "Kimya Mühendisliği",
+  "Biyomühendislik",
+  "Matematik Mühendisliği",
+  "Gıda Mühendisliği",
+  "Metalurji ve Malzeme Mühendisliği",
+
+  // Makine Fakültesi
+  "Makine Mühendisliği",
+  "Mekatronik Mühendisliği",
+  "Endüstri Mühendisliği",
+
+  // Mimarlık Fakültesi
+  "Mimarlık",
+  "Kültür Varlıklarını Koruma ve Onarım",
+  "Şehir ve Bölge Planlama",
+
+  // Sanat ve Tasarım Fakültesi
+  "Sanat",
+  "Müzik ve Sahne Sanatları",
+  "İletişim Tasarımı",
+
+  // Uygulamalı Bilimler Fakültesi
+  "Havacılık Elektroniği Bölümü",
+
+  // Rektörlüğe Bağlı Bölümler
+  "Atatürk İlkeleri ve İnkılap Tarihi",
+  "Enformatik",
+  "Türk Dili",
+  "Beden Eğitimi"
 ];
 
 export const FACULTIES = [
   {
+    name: "Eğitim Fakültesi",
+    departments: [
+      "Bilgisayar ve Öğretim Tek. Öğretmenliği",
+      "Sınıf Öğretmenliği",
+      "Eğitim Bilimleri Bölümü",
+      "Sosyal Bilgiler Öğretmenliği",
+      "Fen Bilgisi Öğretmenliği",
+      "Türkçe Öğretmenliği",
+      "İlköğretim Matematik Öğretmenliği",
+      "İngilizce Öğretmenliği",
+      "Okul Öncesi Öğretmenliği"
+    ]
+  },
+  {
     name: "Elektrik-Elektronik Fakültesi",
     departments: [
       "Bilgisayar Mühendisliği",
+      "Elektronik ve Haberleşme Mühendisliği",
+      "Biyomedikal Mühendisliği",
       "Kontrol ve Otomasyon Mühendisliği",
       "Elektrik Mühendisliği"
     ]
   },
   {
-    name: "Makine Fakültesi",
+    name: "Fen Edebiyat Fakültesi",
     departments: [
-      "Makine Mühendisliği",
-      "Endüstri Mühendisliği"
+      "Batı Dilleri ve Edebiyatları",
+      "Kimya",
+      "Moleküler Biyoloji ve Genetik Bölümü",
+      "Matematik",
+      "Fizik",
+      "Türk Dili ve Edebiyatı",
+      "İstatistik",
+      "İnsan ve Toplum Bilimleri"
     ]
   },
   {
-    name: "Mimarlık Fakültesi",
+    name: "Gemi İnşaatı ve Denizcilik Fakültesi",
     departments: [
-      "Mimarlık"
+      "Gemi İnşaatı ve Gemi Makineleri Mühendisliği",
+      "Gemi Makineleri İşletme Mühendisliği"
+    ]
+  },
+  {
+    name: "İktisadi ve İdari Bilimler Fakültesi",
+    departments: [
+      "İktisat",
+      "Siyaset Bilimi ve Uluslararası İlişkiler",
+      "İşletme"
     ]
   },
   {
     name: "İnşaat Fakültesi",
     departments: [
-      "İnşaat Mühendisliği"
+      "İnşaat Mühendisliği",
+      "Çevre Mühendisliği",
+      "Harita Mühendisliği"
     ]
   },
   {
     name: "Kimya-Metalurji Fakültesi",
     departments: [
       "Kimya Mühendisliği",
+      "Biyomühendislik",
+      "Matematik Mühendisliği",
+      "Gıda Mühendisliği",
       "Metalurji ve Malzeme Mühendisliği"
     ]
   },
   {
-    name: "Fen-Edebiyat Fakültesi",
+    name: "Makine Fakültesi",
     departments: [
-      "Matematik Mühendisliği"
+      "Makine Mühendisliği",
+      "Mekatronik Mühendisliği",
+      "Endüstri Mühendisliği"
     ]
   },
   {
-    name: "İktisadi ve İdari Bilimler Fakültesi",
+    name: "Mimarlık Fakültesi",
     departments: [
-      "İşletme"
+      "Mimarlık",
+      "Kültür Varlıklarını Koruma ve Onarım",
+      "Şehir ve Bölge Planlama"
     ]
   },
   {
-    name: "Gemi İnşaatı ve Denizcilik Fakültesi",
+    name: "Sanat ve Tasarım Fakültesi",
     departments: [
-      "Gemi İnşaatı ve Gemi Makineleri Mühendisliği"
+      "Sanat",
+      "Müzik ve Sahne Sanatları",
+      "İletişim Tasarımı"
+    ]
+  },
+  {
+    name: "Uygulamalı Bilimler Fakültesi",
+    departments: [
+      "Havacılık Elektroniği Bölümü"
+    ]
+  },
+  {
+    name: "Rektörlüğe Bağlı Bölümler",
+    departments: [
+      "Atatürk İlkeleri ve İnkılap Tarihi",
+      "Enformatik",
+      "Türk Dili",
+      "Beden Eğitimi"
     ]
   }
 ];

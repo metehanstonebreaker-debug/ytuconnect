@@ -171,7 +171,7 @@ export default function Chatbot({ preferences }: ChatbotProps) {
   };
 
   // Helper to parse basic markdown to JSX (**bold**, *italic*, bullet lists, etc.)
-  const parseMarkdown = (text: string) => {
+  const parseMarkdown = (text: string, isUser = false) => {
     if (!text) return '';
     
     const lines = text.split('\n');
@@ -196,7 +196,10 @@ export default function Chatbot({ preferences }: ChatbotProps) {
 
         // Add bolded text
         parts.push(
-          <strong key={`b_${lineIdx}_${matchIdx}`} className="font-extrabold text-slate-900 dark:text-white">
+          <strong 
+            key={`b_${lineIdx}_${matchIdx}`} 
+            className={`font-extrabold ${isUser ? 'text-slate-950 dark:text-slate-950' : 'text-slate-900 dark:text-white'}`}
+          >
             {match[1]}
           </strong>
         );
@@ -212,14 +215,20 @@ export default function Chatbot({ preferences }: ChatbotProps) {
 
       if (isListItem) {
         return (
-          <li key={`line_${lineIdx}`} className="ml-4 list-disc text-xs leading-relaxed my-1 text-slate-700 dark:text-slate-300">
+          <li 
+            key={`line_${lineIdx}`} 
+            className={`ml-4 list-disc text-xs leading-relaxed my-1 ${isUser ? 'text-slate-950 dark:text-slate-950' : 'text-slate-700 dark:text-slate-300'}`}
+          >
             {renderedLine}
           </li>
         );
       }
 
       return (
-        <p key={`line_${lineIdx}`} className="text-xs leading-relaxed min-h-[1rem] my-1 text-slate-700 dark:text-slate-300">
+        <p 
+          key={`line_${lineIdx}`} 
+          className={`text-xs leading-relaxed min-h-[1rem] my-1 ${isUser ? 'text-slate-950 dark:text-slate-950' : 'text-slate-700 dark:text-slate-300'}`}
+        >
           {renderedLine}
         </p>
       );
@@ -291,14 +300,14 @@ export default function Chatbot({ preferences }: ChatbotProps) {
                   {/* Bubble content */}
                   <div className={`max-w-[80%] rounded-2xl px-3.5 py-2.5 text-xs shadow-sm ${
                     msg.role === 'user' 
-                      ? 'bg-amber-400 text-slate-900 rounded-tr-none font-medium' 
+                      ? 'bg-amber-400 text-slate-950 rounded-tr-none font-semibold' 
                       : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-none border border-slate-100 dark:border-slate-700/40'
                   }`}>
-                    <div className="prose prose-sm dark:prose-invert">
-                      {parseMarkdown(msg.text)}
+                    <div className={msg.role === 'user' ? 'text-slate-950 font-semibold' : 'prose prose-sm dark:prose-invert'}>
+                      {parseMarkdown(msg.text, msg.role === 'user')}
                     </div>
                     <span className={`text-[9px] mt-1.5 block text-right ${
-                      msg.role === 'user' ? 'text-slate-800/60' : 'text-slate-400'
+                      msg.role === 'user' ? 'text-slate-950/75' : 'text-slate-400'
                     }`}>
                       {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
@@ -387,7 +396,7 @@ export default function Chatbot({ preferences }: ChatbotProps) {
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-slate-900 via-slate-950 to-blue-950 dark:from-amber-400 dark:to-amber-500 rounded-2xl flex items-center justify-center text-amber-400 dark:text-slate-900 shadow-2xl relative border border-slate-800/80 dark:border-amber-300 cursor-pointer"
+        className="w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-slate-900 to-blue-950 dark:from-amber-400 dark:to-amber-500 rounded-2xl flex items-center justify-center text-amber-400 dark:text-slate-900 shadow-2xl relative border border-slate-800/80 dark:border-amber-300 cursor-pointer"
         title="Yıldız Asistan"
       >
         <AnimatePresence mode="wait">
