@@ -167,7 +167,7 @@ export default function GpaCalculator() {
   const getGpaFeedback = (gpaVal: number) => {
     if (gpaVal >= 3.5) return { text: "Yüksek Şeref Öğrencisi! 🏆", color: "text-emerald-500" };
     if (gpaVal >= 3.0) return { text: "Şeref Öğrencisi! 🌟", color: "text-teal-500" };
-    if (gpaVal >= 2.0) return { text: "Başarılı Durumdasın 👍", color: "text-amber-500" };
+    if (gpaVal >= 2.0) return { text: "Başarılı Durumdasın 👍", color: "text-amber-600 dark:text-amber-400" };
     return { text: "Barajın Altında (Yükseltmen Gerek) ⚠️", color: "text-rose-500" };
   };
 
@@ -191,7 +191,7 @@ export default function GpaCalculator() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-black text-amber-500 dark:text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md">
+          <span className="text-xs font-black text-amber-600 dark:text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md">
             {semesterResults.gpa.toFixed(2)}
           </span>
           {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
@@ -290,7 +290,7 @@ export default function GpaCalculator() {
               </div>
               <div className="flex justify-between items-center text-xs pb-1.5 border-b border-slate-200/50 dark:border-slate-800/60">
                 <span className="text-slate-500 dark:text-slate-400 font-semibold font-sans">Dönem Ortalama:</span>
-                <span className="font-black text-amber-500 dark:text-amber-400 text-sm bg-amber-500/5 px-2 py-0.5 rounded-md">
+                <span className="font-black text-amber-600 dark:text-amber-400 text-sm bg-amber-500/5 px-2 py-0.5 rounded-md">
                   {semesterResults.gpa.toFixed(2)}
                 </span>
               </div>
@@ -304,10 +304,10 @@ export default function GpaCalculator() {
               <button 
                 type="button"
                 onClick={() => setShowPrevGpaInput(!showPrevGpaInput)}
-                className="w-full flex items-center justify-between text-[11px] text-slate-500 hover:text-amber-500 font-bold transition outline-none cursor-pointer"
+                className="w-full flex items-center justify-between text-[11px] text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 font-bold transition outline-none cursor-pointer"
               >
                 <span className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
                   Önceki Dönemleri Dahil Et (Genel AGNO)
                 </span>
                 {showPrevGpaInput ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -356,7 +356,7 @@ export default function GpaCalculator() {
                         <p className={`text-[10px] font-bold mt-1 ${cumFeedback.color}`}>{cumFeedback.text}</p>
                       </div>
                       <div className="text-right">
-                        <span className="text-base font-black text-amber-500 dark:text-amber-400 bg-amber-400/15 border border-amber-400/25 px-2.5 py-1 rounded-lg">
+                        <span className="text-base font-black text-amber-700 dark:text-amber-400 bg-amber-400/15 border border-amber-400/25 px-2.5 py-1 rounded-lg">
                           {cumulativeGpa.toFixed(2)}
                         </span>
                       </div>

@@ -115,7 +115,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white/80 dark:bg-slate-900/50 sticky top-0 z-10">
           <div className="flex items-center gap-3">
             <div className="bg-amber-400/10 p-2 rounded-xl border border-amber-400/20">
-              <Sliders className="w-5 h-5 text-amber-500 dark:text-amber-400" />
+              <Sliders className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
               <h2 className="font-bold text-slate-900 dark:text-white text-lg">Hesap ve İçerik Ayarları</h2>
@@ -135,7 +135,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
           
           {/* Section 1: Kişisel Bilgiler */}
           <div className="space-y-4">
-            <h3 className="text-xs font-bold text-amber-500 dark:text-amber-400 uppercase tracking-widest flex items-center gap-2">
+            <h3 className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-2">
               <User className="w-4 h-4" />
               1. Kişisel Profil Bilgileri
             </h3>
@@ -186,7 +186,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
 
           {/* Section 2: İlgi Alanları ve Kulüpler */}
           <div className="space-y-4">
-            <h3 className="text-xs font-bold text-amber-500 dark:text-amber-400 uppercase tracking-widest flex items-center gap-2">
+            <h3 className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-2">
               <Sliders className="w-4 h-4" />
               2. İlgi Alanları ve Takip Edilen Kulüpler
             </h3>

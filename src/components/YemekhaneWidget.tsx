@@ -94,7 +94,7 @@ export default function YemekhaneWidget() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-amber-500/10 dark:bg-amber-400/10 text-amber-500 dark:text-amber-400 rounded-lg">
+          <div className="p-1.5 bg-amber-500/10 dark:bg-amber-400/10 text-amber-600 dark:text-amber-400 rounded-lg">
             <Utensils className="w-4 h-4" />
           </div>
           <div>
@@ -214,7 +214,7 @@ export default function YemekhaneWidget() {
 
       {/* Info footer */}
       <div className="flex items-center gap-2 text-[9px] text-slate-400 dark:text-slate-500 bg-slate-50/40 dark:bg-slate-950/15 p-2 rounded-lg border border-slate-100/50 dark:border-slate-800/30">
-        <Clock className="w-3 h-3 text-amber-500 shrink-0" />
+        <Clock className="w-3 h-3 text-amber-600 dark:text-amber-400 shrink-0" />
         <span className="leading-tight">
           Öğle: 11:30 - 14:30 | Akşam: 16:30 - 19:00 saatleri arasında servis edilir.
         </span>

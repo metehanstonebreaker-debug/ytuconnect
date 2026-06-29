@@ -120,7 +120,7 @@ export default function Feed({
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800/80">
         <div className="flex justify-between items-center mb-3 px-1">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Aktif Kulüpler & Hikayeler</p>
-          <span className="text-[10px] text-amber-500 font-bold flex items-center gap-1">
+          <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
             Canlı Kampüs
           </span>
@@ -154,7 +154,7 @@ export default function Feed({
                     {club.logo}
                   </div>
                 </div>
-                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 group-hover:text-amber-500 transition-colors max-w-[70px] truncate">
+                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors max-w-[70px] truncate">
                   {club.name}
                 </span>
               </div>
@@ -367,7 +367,7 @@ export default function Feed({
                   {/* Pinned & Personalized Badges */}
                   <div className="flex items-center gap-1.5 mb-2.5">
                     {post.isPinned && (
-                      <span className="inline-flex items-center gap-1 text-[9px] bg-amber-400/10 text-amber-500 border border-amber-400/20 font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                      <span className="inline-flex items-center gap-1 text-[9px] bg-amber-400/10 text-amber-700 dark:text-amber-400 border border-amber-400/20 font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
                         <Pin className="w-2.5 h-2.5" /> Sabitlendi
                       </span>
                     )}
@@ -441,12 +441,12 @@ export default function Feed({
                       onClick={() => onToggleSavePost(post.id)}
                       className={`flex items-center space-x-1.5 text-xs font-semibold transition ml-auto group ${
                         isSaved 
-                          ? 'text-amber-500' 
-                          : 'text-slate-400 hover:text-amber-500'
+                          ? 'text-amber-600 dark:text-amber-400' 
+                          : 'text-slate-400 hover:text-amber-600 dark:hover:text-amber-400'
                       }`}
                       title={isSaved ? "Kaydetmeyi Kaldır" : "Kaydet"}
                     >
-                      <Bookmark className={`w-4 h-4 transition duration-200 group-active:scale-[1.3] ${isSaved ? 'fill-amber-500 stroke-amber-500' : ''}`} />
+                      <Bookmark className={`w-4 h-4 transition duration-200 group-active:scale-[1.3] ${isSaved ? 'fill-amber-600 stroke-amber-600 dark:fill-amber-400 dark:stroke-amber-400' : ''}`} />
                       <span>{isSaved ? 'Kaydedildi' : 'Kaydet'}</span>
                     </button>
                   </div>

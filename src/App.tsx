@@ -234,7 +234,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5">
-                YILDIZ <span className="text-amber-500 dark:text-amber-400">CONNECT</span>
+                YILDIZ <span className="text-amber-600 dark:text-amber-400">CONNECT</span>
               </h1>
               <p className="hidden md:block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">
                 YTÜ DİJİTAL KAMPÜSÜ
@@ -259,7 +259,7 @@ export default function App() {
             {/* Dark Mode */}
             <button 
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-amber-500 transition-colors"
+              className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
               title={darkMode ? 'Aydınlık Mod' : 'Karanlık Mod'}
             >
               {darkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
@@ -269,7 +269,7 @@ export default function App() {
             <div className="relative">
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-amber-500 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
               >
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-1 right-1 bg-rose-500 text-[9px] text-white font-extrabold rounded-full w-4 h-4 flex items-center justify-center animate-pulse">
@@ -284,7 +284,7 @@ export default function App() {
                     <p className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Bildirimler</p>
                     <button 
                       onClick={() => setNotifications([])} 
-                      className="text-[10px] text-slate-400 hover:text-amber-500"
+                      className="text-[10px] text-slate-400 hover:text-amber-600 dark:hover:text-amber-400"
                     >
                       Tümünü temizle
                     </button>
@@ -387,7 +387,7 @@ export default function App() {
                   onClick={() => setShowOnlySaved(false)}
                   className={`w-full flex items-center justify-between px-3.5 py-3 text-left rounded-xl font-bold text-xs transition cursor-pointer ${
                     !showOnlySaved 
-                      ? 'text-amber-500 bg-amber-500/5 border border-amber-400/10'
+                      ? 'text-amber-600 dark:text-amber-400 bg-amber-500/5 border border-amber-400/10'
                       : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white border border-transparent'
                   }`}
                 >
@@ -424,7 +424,7 @@ export default function App() {
                   onClick={() => setShowOnlySaved(true)}
                   className={`w-full flex items-center justify-between px-3.5 py-3 text-left rounded-xl font-semibold text-xs transition cursor-pointer ${
                     showOnlySaved 
-                      ? 'text-amber-500 bg-amber-500/5 border border-amber-400/10 font-bold'
+                      ? 'text-amber-600 dark:text-amber-400 bg-amber-500/5 border border-amber-400/10 font-bold'
                       : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white border border-transparent'
                   }`}
                 >
@@ -493,21 +493,21 @@ export default function App() {
             {/* Fast Stats / Trending Topics */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800/80">
               <h3 className="font-bold text-xs text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5 mb-3">
-                <TrendingUp className="w-4 h-4 text-amber-500" />
+                <TrendingUp className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 Kampüste Bugün Popüler
               </h3>
               <div className="space-y-3 text-xs">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600 dark:text-slate-400 font-medium">#yildiz_hack_26</span>
-                  <span className="text-[10px] font-bold text-amber-500 bg-amber-500/5 px-2 py-0.5 rounded">134 paylaşım</span>
+                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/5 px-2 py-0.5 rounded">134 paylaşım</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600 dark:text-slate-400 font-medium">#davutpasa_ring_sirasi</span>
-                  <span className="text-[10px] font-bold text-amber-500 bg-amber-500/5 px-2 py-0.5 rounded">98 paylaşım</span>
+                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/5 px-2 py-0.5 rounded">98 paylaşım</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600 dark:text-slate-400 font-medium">#teknopark_staj</span>
-                  <span className="text-[10px] font-bold text-amber-500 bg-amber-500/5 px-2 py-0.5 rounded">75 paylaşım</span>
+                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/5 px-2 py-0.5 rounded">75 paylaşım</span>
                 </div>
               </div>
             </div>
