@@ -360,7 +360,7 @@ export default function Chatbot({ preferences }: ChatbotProps) {
                 e.preventDefault();
                 handleSend(input);
               }}
-              className="p-3.5 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-850 flex items-center gap-2"
+              className="p-3.5 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center gap-2"
             >
               <input 
                 type="text"
@@ -368,7 +368,7 @@ export default function Chatbot({ preferences }: ChatbotProps) {
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Yıldız Asistan'a sor..."
                 disabled={isLoading}
-                className="flex-1 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-850 outline-none focus:border-amber-400 dark:focus:border-amber-400/80 transition-all placeholder-slate-400 disabled:opacity-60"
+                className="flex-1 bg-slate-50 dark:bg-slate-950/60 text-slate-800 dark:text-white text-xs px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 outline-none focus:border-amber-400 dark:focus:border-amber-400/80 transition-all placeholder-slate-400 disabled:opacity-60"
               />
               <button 
                 type="submit"

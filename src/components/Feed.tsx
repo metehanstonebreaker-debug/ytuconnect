@@ -117,7 +117,7 @@ export default function Feed({
     <div className="space-y-6">
       
       {/* 1. STORIES (Active Clubs) */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-700/40">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800/80">
         <div className="flex justify-between items-center mb-3 px-1">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Aktif Kulüpler & Hikayeler</p>
           <span className="text-[10px] text-amber-500 font-bold flex items-center gap-1">
@@ -164,7 +164,7 @@ export default function Feed({
       </div>
 
       {/* 2. SEARCH & FEED NAVIGATION */}
-      <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center bg-white dark:bg-slate-800 p-3 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700/40">
+      <div className="flex flex-col sm:flex-row gap-3 justify-between items-stretch sm:items-center bg-white dark:bg-slate-900 p-3 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800/80">
         
         {/* Tab Buttons */}
         <div className="flex gap-1.5 bg-slate-100 dark:bg-slate-900/60 p-1 rounded-xl">
@@ -172,7 +172,7 @@ export default function Feed({
             onClick={() => setActiveTab('all')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeTab === 'all'
-                ? 'bg-white dark:bg-slate-850 text-slate-900 dark:text-amber-400 shadow-sm'
+                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-amber-400 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
@@ -182,7 +182,7 @@ export default function Feed({
             onClick={() => setActiveTab('dept')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
               activeTab === 'dept'
-                ? 'bg-white dark:bg-slate-850 text-slate-900 dark:text-amber-400 shadow-sm'
+                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-amber-400 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
@@ -192,7 +192,7 @@ export default function Feed({
             onClick={() => setActiveTab('clubs')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeTab === 'clubs'
-                ? 'bg-white dark:bg-slate-850 text-slate-900 dark:text-amber-400 shadow-sm'
+                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-amber-400 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
@@ -216,7 +216,7 @@ export default function Feed({
       </div>
 
       {/* 3. SHARING BOX */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-700/40">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800/80">
         <form onSubmit={handleSharePostSubmit} className="space-y-3.5">
           <div className="flex gap-3 items-start">
             <img 
@@ -256,14 +256,14 @@ export default function Feed({
               <button 
                 type="button" 
                 onClick={() => alert("Görsel yükleme simüle edilmiştir.")}
-                className="text-slate-400 hover:text-emerald-500 transition p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-750"
+                className="text-slate-400 hover:text-emerald-500 transition p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <Image className="w-4 h-4" />
               </button>
               <button 
                 type="button" 
                 onClick={() => alert("Konum seçimi simüle edilmiştir.")}
-                className="text-slate-400 hover:text-rose-500 transition p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-750"
+                className="text-slate-400 hover:text-rose-500 transition p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
               >
                 <MapPin className="w-4 h-4" />
               </button>
@@ -337,7 +337,7 @@ export default function Feed({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-center py-12 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700/40"
+              className="text-center py-12 bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/80"
             >
               <div className="text-slate-300 dark:text-slate-600 mb-2 flex justify-center">
                 <FilterX className="w-12 h-12 stroke-[1.2]" />
@@ -361,7 +361,7 @@ export default function Feed({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.25 }}
-                  className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-700/40 relative overflow-hidden transition-all hover:shadow-md"
+                  className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800/80 relative overflow-hidden transition-all hover:shadow-md"
                 >
                   
                   {/* Pinned & Personalized Badges */}
@@ -371,7 +371,7 @@ export default function Feed({
                         <Pin className="w-2.5 h-2.5" /> Sabitlendi
                       </span>
                     )}
-                    <span className="inline-flex items-center text-[9px] bg-slate-100 dark:bg-slate-750 text-slate-500 dark:text-slate-300 font-bold px-2 py-0.5 rounded-full">
+                    <span className="inline-flex items-center text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 font-bold px-2 py-0.5 rounded-full">
                       {post.field}
                     </span>
                     {isPersonalDept && (

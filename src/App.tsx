@@ -11,6 +11,7 @@ import WeatherWidget from './components/WeatherWidget';
 import ExamWidget from './components/ExamWidget';
 import Chatbot from './components/Chatbot';
 import GpaCalculator from './components/GpaCalculator';
+import YemekhaneWidget from './components/YemekhaneWidget';
 import { UserPreferences, Post } from './types';
 import { MOCK_POSTS, DEPARTMENTS } from './mockData';
 import { 
@@ -293,7 +294,7 @@ export default function App() {
                       <p className="text-xs text-slate-400 text-center py-4">Yeni bildirim bulunmuyor.</p>
                     ) : (
                       notifications.map((notif, idx) => (
-                        <div key={idx} className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-850">
+                        <div key={idx} className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-slate-800">
                           {notif}
                         </div>
                       ))
@@ -387,7 +388,7 @@ export default function App() {
                   className={`w-full flex items-center justify-between px-3.5 py-3 text-left rounded-xl font-bold text-xs transition cursor-pointer ${
                     !showOnlySaved 
                       ? 'text-amber-500 bg-amber-500/5 border border-amber-400/10'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-800 dark:hover:text-white border border-transparent'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white border border-transparent'
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
@@ -399,7 +400,7 @@ export default function App() {
 
                 <button 
                   onClick={() => alert("Fakülte haberleri panosu yakında aktif edilecektir.")}
-                  className="w-full flex items-center justify-between px-3.5 py-3 text-left rounded-xl font-semibold text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-800 dark:hover:text-white transition border border-transparent"
+                  className="w-full flex items-center justify-between px-3.5 py-3 text-left rounded-xl font-semibold text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white transition border border-transparent"
                 >
                   <span className="flex items-center gap-2.5">
                     <BookOpen className="w-4 h-4" />
@@ -410,7 +411,7 @@ export default function App() {
 
                 <button 
                   onClick={() => alert("Kulüp portalı yakında aktif edilecektir.")}
-                  className="w-full flex items-center justify-between px-3.5 py-3 text-left rounded-xl font-semibold text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-800 dark:hover:text-white transition border border-transparent"
+                  className="w-full flex items-center justify-between px-3.5 py-3 text-left rounded-xl font-semibold text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white transition border border-transparent"
                 >
                   <span className="flex items-center gap-2.5">
                     <Users className="w-4 h-4" />
@@ -424,7 +425,7 @@ export default function App() {
                   className={`w-full flex items-center justify-between px-3.5 py-3 text-left rounded-xl font-semibold text-xs transition cursor-pointer ${
                     showOnlySaved 
                       ? 'text-amber-500 bg-amber-500/5 border border-amber-400/10 font-bold'
-                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-850 hover:text-slate-800 dark:hover:text-white border border-transparent'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white border border-transparent'
                   }`}
                 >
                   <span className="flex items-center gap-2.5">
@@ -475,6 +476,9 @@ export default function App() {
             
             {/* Campus Weather */}
             <WeatherWidget />
+
+            {/* Yemekhane Menüsü */}
+            <YemekhaneWidget />
 
             {/* Exam Schedule (Filtered) */}
             <ExamWidget 

@@ -91,7 +91,15 @@ export const CLUBS: Club[] = [
   { id: "isletme", name: "İşletme Kulübü", logo: "💼", description: "Girişimcilik zirveleri, vaka analizleri ve iş dünyası buluşmaları düzenler." },
   { id: "sstk", name: "SSTK (Savunma Sanayii)", logo: "🛡️", description: "Savunma sanayii devleri ile projeler, teknik geziler ve paneller düzenler." },
   { id: "sanattasarim", name: "Sanat & Tasarım", logo: "🎭", description: "Tiyatro, müzik dinletileri, heykel ve resim atölyeleri ile ruhu besler." },
-  { id: "spor_kulubu", name: "YTÜ Spor Kulübü", logo: "⚽", description: "Kampüs içi turnuvalar ve üniversiteler arası müsabakaları koordine eder." }
+  { id: "spor_kulubu", name: "YTÜ Spor Kulübü", logo: "⚽", description: "Kampüs içi turnuvalar ve üniversiteler arası müsabakaları koordine eder." },
+  { id: "aesk", name: "AESK (Alternatif Enerji)", logo: "🚗", description: "Alternatif enerjili ve elektrikli araçlar tasarlayan ödüllü teknik takım." },
+  { id: "rover", name: "Yıldız Rover", logo: "🛰️", description: "Uzay araştırma araçları (rover) tasarlayan robotik ve uzay kulübü." },
+  { id: "girisim", name: "Girişimcilik Kulübü", logo: "💡", description: "Girişimcilik ekosistemi, startup zirveleri ve fikir yarışmaları organize eder." },
+  { id: "sinema", name: "YTÜ Sinema Kulübü", logo: "🎬", description: "Açık hava film gösterimleri, senaryo analizleri ve yönetmen söyleşileri." },
+  { id: "fotograf", name: "Fotoğraf Kulübü (YÜFOT)", logo: "📷", description: "Fotoğrafçılık eğitimleri, karanlık oda çalışmaları ve fotoğraf sergileri." },
+  { id: "muzik", name: "Müzik Kulübü (YÜMÜK)", logo: "🎸", description: "Konserler, stüdyo çalışmaları, enstrüman eğitimleri ve müzik grupları." },
+  { id: "dagcilik", name: "YTÜDAK (Dağcılık)", logo: "🧗", description: "Tırmanış eğitimleri, kampçılık, doğa yürüyüşleri ve zirve tırmanışları." },
+  { id: "espor", name: "E-Spor Kulübü", logo: "🎮", description: "Kampüs içi oyun turnuvaları, canlı yayınlar ve profesyonel espor ligleri." }
 ];
 
 export const MOCK_POSTS: Post[] = [

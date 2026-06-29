@@ -346,7 +346,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                 onReset();
               }
             }}
-            className="px-3.5 py-2 border border-slate-250 dark:border-slate-800 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:border-rose-500/20 rounded-xl text-xs font-bold transition cursor-pointer"
+            className="px-3.5 py-2 border border-slate-200 dark:border-slate-800 hover:bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:border-rose-500/20 rounded-xl text-xs font-bold transition cursor-pointer"
           >
             Hesabı Sıfırla / Log Out
           </button>
@@ -354,7 +354,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
           <div className="flex gap-2">
             <button
               onClick={onClose}
-              className="px-4 py-2 bg-slate-150 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-750 dark:text-white rounded-xl text-xs font-bold transition cursor-pointer"
+              className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-white rounded-xl text-xs font-bold transition cursor-pointer"
             >
               İptal
             </button>

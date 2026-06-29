@@ -82,17 +82,38 @@ app.post("/api/chat", async (req, res) => {
       parts: [{ text: message + userContext }]
     });
 
-    // Use gemini-3.5-flash as the standard model for quick chat tasks
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: formattedContents,
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        temperature: 0.7,
-      },
-    });
+    // Use gemini-3.5-flash as the standard model with fallback to other models if it fails (e.g. due to high demand)
+    let response;
+    let lastError;
+    const modelsToTry = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-flash-latest"];
+    
+    for (const modelName of modelsToTry) {
+      try {
+        console.log(`Attempting chat generation with model: ${modelName}`);
+        response = await ai.models.generateContent({
+          model: modelName,
+          contents: formattedContents,
+          config: {
+            systemInstruction: SYSTEM_INSTRUCTION,
+            temperature: 0.7,
+          },
+        });
+        if (response && response.text) {
+          console.log(`Successfully generated content using model: ${modelName}`);
+          break; // Break loop if we got a successful response
+        }
+      } catch (err: any) {
+        console.error(`Error with model ${modelName}:`, err.message || err);
+        lastError = err;
+        // Continue to next model
+      }
+    }
 
-    const reply = response.text || "Üzgünüm, şu anda yanıt oluşturamıyorum. Lütfen tekrar dener misiniz?";
+    if (!response || !response.text) {
+      throw lastError || new Error("Hiçbir yapay zeka modeli yanıt vermedi.");
+    }
+
+    const reply = response.text;
     res.json({ text: reply });
 
   } catch (error: any) {

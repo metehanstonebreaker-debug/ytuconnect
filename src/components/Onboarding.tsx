@@ -222,68 +222,46 @@ export default function Onboarding({ onComplete, initialPreferences }: Onboardin
                   <GraduationCap className="w-5 h-5 text-amber-400" />
                   Akademik Bilgileriniz
                 </h2>
-                <p className="text-slate-400 text-xs mb-4">
-                  Kampüs akışınızı ve sınav takviminizi size özel hazırlamak için fakülte ve bölümünüzü seçin.
+                <p className="text-slate-400 text-xs mb-3.5">
+                  Kampüs akışınızı ve sınav takviminizi size özel hazırlamak için fakültelerdeki bütün bölümler arasından bölümünüzü seçin.
                 </p>
 
-                {/* 1. Faculty Select */}
-                <div className="mb-4">
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                    1. Fakülteniz <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={selectedFaculty}
-                      onChange={(e) => {
-                        setSelectedFaculty(e.target.value);
-                        setDepartment(''); // Reset department on faculty switch
-                      }}
-                      className="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-3 pl-4 pr-10 text-white appearance-none cursor-pointer focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 text-sm transition"
-                    >
-                      <option value="" className="bg-slate-800 text-slate-400">--- Lütfen Fakülte Seçiniz ---</option>
-                      {FACULTIES.map(fac => (
-                        <option key={fac.name} value={fac.name} className="bg-slate-800 text-white">{fac.name}</option>
-                      ))}
-                    </select>
-                    <div className="absolute right-3.5 top-3.5 pointer-events-none text-slate-400">
-                      <Compass className="w-4 h-4" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Department Selection */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">
-                    2. Bölümünüz <span className="text-rose-500">*</span>
-                  </label>
-                  <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1 custom-scrollbar">
-                    {selectedFaculty ? (
-                      FACULTIES.find(f => f.name === selectedFaculty)?.departments.map((dept) => (
-                        <button
-                          key={dept}
-                          type="button"
-                          onClick={() => setDepartment(dept)}
-                          className={`w-full p-3 rounded-xl text-left font-medium transition flex items-center justify-between border cursor-pointer ${
-                            department === dept
-                              ? 'bg-amber-400/10 border-amber-400 text-white shadow-md'
-                              : 'bg-slate-900/40 border-slate-700/60 text-slate-300 hover:bg-slate-700/50 hover:text-white'
-                          }`}
-                        >
-                          <span className="text-xs truncate">{dept}</span>
-                          {department === dept && (
-                            <div className="bg-amber-400 p-0.5 rounded-full">
-                              <Check className="w-3.5 h-3.5 text-slate-900 stroke-[3px]" />
-                            </div>
-                          )}
-                        </button>
-                      ))
-                    ) : (
-                      <div className="text-center py-6 bg-slate-900/20 border border-dashed border-slate-700/40 rounded-xl">
-                        <GraduationCap className="w-7 h-7 text-slate-600 mx-auto mb-1.5 opacity-40" />
-                        <p className="text-[11px] text-slate-500">Önce yukarıdan fakültenizi seçmelisiniz.</p>
+                {/* All Faculties & Departments scrollable list */}
+                <div className="space-y-4 max-h-[280px] overflow-y-auto pr-1.5 custom-scrollbar bg-slate-950/40 border border-slate-700/40 p-3.5 rounded-2xl">
+                  {FACULTIES.map((fac) => (
+                    <div key={fac.name} className="space-y-2">
+                      <div className="flex items-center gap-1.5 border-b border-slate-800 pb-1 mt-1">
+                        <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">{fac.name}</span>
                       </div>
-                    )}
-                  </div>
+                      <div className="grid grid-cols-1 gap-1.5">
+                        {fac.departments.map((dept) => {
+                          const isSelected = department === dept;
+                          return (
+                            <button
+                              key={dept}
+                              type="button"
+                              onClick={() => {
+                                setDepartment(dept);
+                                setSelectedFaculty(fac.name);
+                              }}
+                              className={`w-full p-2.5 rounded-xl text-left font-semibold transition flex items-center justify-between border cursor-pointer ${
+                                isSelected
+                                  ? 'bg-amber-400/10 border-amber-400 text-white shadow-md'
+                                  : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-800/60 hover:text-white'
+                              }`}
+                            >
+                              <span className="text-xs truncate">{dept}</span>
+                              {isSelected && (
+                                <div className="bg-amber-400 p-0.5 rounded-full shrink-0">
+                                  <Check className="w-3.5 h-3.5 text-slate-950 stroke-[3px]" />
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -339,7 +317,7 @@ export default function Onboarding({ onComplete, initialPreferences }: Onboardin
                         <button
                           key={field.id}
                           onClick={() => toggleField(field.id)}
-                          className={`p-2.5 rounded-xl border text-left transition flex items-center gap-2 ${
+                          className={`p-2.5 rounded-xl border text-left transition flex items-center gap-2 cursor-pointer ${
                             isSelected 
                               ? 'bg-indigo-500/10 border-indigo-500 text-white' 
                               : 'bg-slate-900/40 border-slate-700/60 text-slate-400 hover:bg-slate-700/40 hover:text-slate-200'
@@ -353,25 +331,38 @@ export default function Onboarding({ onComplete, initialPreferences }: Onboardin
                   </div>
                 </div>
 
-                {/* Clubs Section */}
+                {/* Clubs Section with overhauled interface */}
                 <div>
-                  <h3 className="text-xs font-bold text-slate-300 uppercase tracking-widest mb-2">Takip Etmek İstediğiniz Kulüpler</h3>
-                  <div className="flex flex-wrap gap-1.5 max-h-[140px] overflow-y-auto pr-1">
+                  <h3 className="text-xs font-bold text-slate-300 uppercase tracking-widest mb-2.5 flex justify-between items-center">
+                    <span>Takip Etmek İstediğiniz Kulüpler</span>
+                    <span className="text-[10px] text-amber-400 font-semibold">{selectedClubs.length} seçildi</span>
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[190px] overflow-y-auto pr-1.5 custom-scrollbar bg-slate-950/40 border border-slate-700/40 p-2.5 rounded-2xl">
                     {CLUBS.map((club) => {
                       const isSelected = selectedClubs.includes(club.id);
                       return (
                         <button
                           key={club.id}
+                          type="button"
                           onClick={() => toggleClub(club.id)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all flex items-center gap-1.5 ${
+                          className={`p-2.5 rounded-xl border text-left transition flex items-start gap-2.5 cursor-pointer ${
                             isSelected 
-                              ? 'bg-amber-400 text-slate-900 border-amber-400 font-bold' 
-                              : 'bg-slate-900/50 border-slate-700 text-slate-300 hover:border-slate-500'
+                              ? 'bg-amber-400/10 border-amber-400 text-white shadow-md' 
+                              : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:bg-slate-800/40 hover:text-white'
                           }`}
                         >
-                          <span>{club.logo}</span>
-                          <span>{club.name}</span>
-                          {isSelected && <Check className="w-3.5 h-3.5 stroke-[3px]" />}
+                          <span className="text-xl bg-slate-800/80 p-1 rounded-lg shrink-0">{club.logo}</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold truncate text-white">{club.name}</p>
+                            <p className="text-[9px] text-slate-400 line-clamp-2 mt-0.5 leading-relaxed leading-snug">{club.description}</p>
+                          </div>
+                          <div className={`w-4 h-4 rounded-full border shrink-0 mt-0.5 flex items-center justify-center transition-all ${
+                            isSelected 
+                              ? 'bg-amber-400 border-amber-400 text-slate-950' 
+                              : 'border-slate-600 text-transparent'
+                          }`}>
+                            <Check className="w-2.5 h-2.5 stroke-[3.5px]" />
+                          </div>
                         </button>
                       );
                     })}
@@ -383,13 +374,13 @@ export default function Onboarding({ onComplete, initialPreferences }: Onboardin
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={handleBack}
-                  className="w-1/4 py-3.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold flex items-center justify-center gap-1 transition active:scale-[0.98]"
+                  className="w-1/4 py-3.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold flex items-center justify-center gap-1 transition active:scale-[0.98] cursor-pointer"
                 >
                   Geri
                 </button>
                 <button
                   onClick={handleSubmit}
-                  className="w-3/4 py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-bold rounded-xl flex items-center justify-center gap-2 transition transform active:scale-[0.98] shadow-lg shadow-amber-500/10"
+                  className="w-3/4 py-3.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-bold rounded-xl flex items-center justify-center gap-2 transition transform active:scale-[0.98] shadow-lg shadow-amber-500/10 cursor-pointer"
                 >
                   Sisteme Giriş Yap
                   <ArrowRight className="w-5 h-5 stroke-[2.5px]" />

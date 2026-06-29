@@ -43,7 +43,7 @@ export default function ExamWidget({ department, isFilteredOut, onRestore }: Exa
   }
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm p-4 border-t-4 border-red-500 transition hover:shadow-md">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800/80 border-t-4 border-t-red-500 transition hover:shadow-md">
       <div className="flex justify-between items-center mb-3">
         <h3 className="font-bold text-xs text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
           <Calendar className="w-4 h-4 text-red-500" />
@@ -61,7 +61,7 @@ export default function ExamWidget({ department, isFilteredOut, onRestore }: Exa
       ) : (
         <div className="space-y-3">
           {filteredExams.slice(0, 3).map((exam) => (
-            <div key={exam.id} className="flex items-center space-x-3 bg-slate-50 dark:bg-slate-750 p-2 rounded-xl border border-slate-100 dark:border-slate-700/30">
+            <div key={exam.id} className="flex items-center space-x-3 bg-slate-50 dark:bg-slate-950/40 p-2 rounded-xl border border-slate-100 dark:border-slate-800/60">
               <div className="bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 p-2 rounded-lg text-center min-w-[45px] border border-red-100/50 dark:border-red-900/20">
                 <p className="text-[9px] font-bold uppercase">{exam.month}</p>
                 <p className="text-base font-black leading-none mt-0.5">{exam.date}</p>

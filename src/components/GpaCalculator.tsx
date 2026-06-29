@@ -175,7 +175,7 @@ export default function GpaCalculator() {
   const cumFeedback = getGpaFeedback(cumulativeGpa);
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border-b-4 border-amber-500 transition duration-350 hover:shadow-md overflow-hidden" id="ytu_gpa_calculator">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800/80 border-b-4 border-b-amber-500 transition duration-350 hover:shadow-md overflow-hidden" id="ytu_gpa_calculator">
       {/* Header */}
       <button 
         onClick={() => setIsExpanded(!isExpanded)}
@@ -268,7 +268,7 @@ export default function GpaCalculator() {
             <div className="flex gap-2.5">
               <button 
                 onClick={handleAddCourse}
-                className="flex-1 py-1.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border border-transparent dark:border-slate-700/30"
+                className="flex-1 py-1.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border border-transparent dark:border-slate-700/30"
               >
                 <Plus className="w-4 h-4 text-amber-500" />
                 Ders Ekle
