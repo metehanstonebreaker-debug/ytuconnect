@@ -1,6 +1,6 @@
 {
-  "name": "Yıldız Connect",
+  "name": "YildizConnect",
   "description": "YTÜ öğrencileri için kişiselleştirilmiş dijital kampüs, bölüm ve ilgi alanları filtreleme ve haber portalı.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["camera", "geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

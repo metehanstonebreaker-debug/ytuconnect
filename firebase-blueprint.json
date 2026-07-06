@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "Post": {
+      "title": "Post",
+      "description": "YTÜ Connect feed post made by a student or club",
+      "type": "object",
+      "properties": {
+        "author": {
+          "type": "string",
+          "description": "Username of the author"
+        },
+        "authorAvatar": {
+          "type": "string",
+          "description": "Avatar URL of the author"
+        },
+        "time": {
+          "type": "string",
+          "description": "Human-readable time representation (e.g. Şimdi, 2 saat önce)"
+        },
+        "content": {
+          "type": "string",
+          "description": "Content text of the post"
+        },
+        "likes": {
+          "type": "integer",
+          "description": "Number of likes the post received"
+        },
+        "field": {
+          "type": "string",
+          "description": "Interest category or department name"
+        },
+        "club": {
+          "type": "string",
+          "description": "Optional club name that posted this"
+        },
+        "isPinned": {
+          "type": "boolean",
+          "description": "Whether this post is pinned to the top of the feed"
+        },
+        "image": {
+          "type": "string",
+          "description": "Optional Base64 or URL attached image"
+        },
+        "location": {
+          "type": "string",
+          "description": "Optional attached campus location"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp for sorting posts"
+        }
+      },
+      "required": ["author", "content", "likes", "field", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/posts/{postId}": {
+      "schema": "Post",
+      "description": "Collection of community and official posts in the feed"
+    }
+  }
+}

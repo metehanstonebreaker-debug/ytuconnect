@@ -13,6 +13,14 @@ export interface UserPreferences {
   isOnboarded: boolean;
 }
 
+export interface Comment {
+  id: string;
+  author: string;
+  authorAvatar: string;
+  content: string;
+  createdAt: string;
+}
+
 export interface Post {
   id: string;
   author: string;
@@ -25,6 +33,9 @@ export interface Post {
   field: string; // e.g. 'Teknoloji & Yazılım', 'Sosyal & Eğlence', 'Kariyer & Staj', 'Akademik', 'Kültür & Sanat', 'Spor'
   club?: string; // Optional: posted by a club
   isPinned?: boolean;
+  image?: string; // Optional: attached image URL/base64
+  location?: string; // Optional: attached location description
+  comments?: Comment[]; // List of comments on this post
 }
 
 export interface Exam {

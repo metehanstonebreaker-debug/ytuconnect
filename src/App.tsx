@@ -11,9 +11,10 @@ import WeatherWidget from './components/WeatherWidget';
 import ExamWidget from './components/ExamWidget';
 import Chatbot from './components/Chatbot';
 import GpaCalculator from './components/GpaCalculator';
-import YemekhaneWidget from './components/YemekhaneWidget';
 import { UserPreferences, Post } from './types';
 import { MOCK_POSTS, DEPARTMENTS } from './mockData';
+import { collection, onSnapshot, query, orderBy, addDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { db, handleFirestoreError, OperationType } from './firebase';
 import { 
   Bell, 
   Settings, 
@@ -65,19 +66,91 @@ export default function App() {
     };
   });
 
-  // 3. Posts feed list state (persisting new posts in state)
-  const [posts, setPosts] = useState<Post[]>(() => {
-    const saved = localStorage.getItem('ytu_custom_posts');
+  // 3. Raw posts from Firestore cloud database
+  const [rawPosts, setRawPosts] = useState<Post[]>([]);
+
+  // Local record of which posts have been liked by the user to calculate likedByMe on-the-fly
+  const [likedPostIds, setLikedPostIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('ytu_liked_posts');
     if (saved) {
       try {
-        const parsed = JSON.parse(saved);
-        return [...parsed, ...MOCK_POSTS];
-      } catch (e) {
-        // Fallback
-      }
+        return JSON.parse(saved);
+      } catch (e) {}
     }
-    return MOCK_POSTS;
+    return [];
   });
+
+  // Derived state: Inject likedByMe status dynamically for a personalized user experience
+  const posts = rawPosts.map(p => ({
+    ...p,
+    likedByMe: likedPostIds.includes(p.id)
+  }));
+
+  // Sync liked posts to localStorage
+  useEffect(() => {
+    localStorage.setItem('ytu_liked_posts', JSON.stringify(likedPostIds));
+  }, [likedPostIds]);
+
+  // Sync posts from Cloud Firestore database in real-time
+  useEffect(() => {
+    const postsRef = collection(db, 'posts');
+    const q = query(postsRef, orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      if (snapshot.empty) {
+        console.log("Cloud database is empty. Seeding with official default posts...");
+        for (let i = 0; i < MOCK_POSTS.length; i++) {
+          const mockPost = MOCK_POSTS[i];
+          const mockDocId = mockPost.id;
+          const docRef = doc(db, 'posts', mockDocId);
+          
+          try {
+            await setDoc(docRef, {
+              author: mockPost.author,
+              authorAvatar: mockPost.authorAvatar,
+              time: mockPost.time,
+              content: mockPost.content,
+              likes: mockPost.likes || 0,
+              field: mockPost.field,
+              department: mockPost.department || null,
+              club: mockPost.club || null,
+              isPinned: mockPost.isPinned || false,
+              image: mockPost.image || null,
+              location: mockPost.location || null,
+              createdAt: new Date(Date.now() - 3600000 * i).toISOString() // space them out
+            });
+          } catch (err) {
+            handleFirestoreError(err, OperationType.WRITE, `posts/${mockDocId}`);
+          }
+        }
+      } else {
+        const fetchedList: Post[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          fetchedList.push({
+            id: doc.id,
+            author: data.author,
+            authorAvatar: data.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.author)}`,
+            time: data.time || "Şimdi",
+            content: data.content,
+            likes: data.likes || 0,
+            field: data.field,
+            department: data.department || undefined,
+            club: data.club || undefined,
+            isPinned: data.isPinned || false,
+            image: data.image || undefined,
+            location: data.location || undefined,
+            comments: data.comments || []
+          });
+        });
+        setRawPosts(fetchedList);
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'posts');
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // UI state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -125,22 +198,26 @@ export default function App() {
     setIsSettingsOpen(false);
   };
 
-  // Like / Unlike action on post
-  const handleLikePost = (postId: string) => {
-    setPosts(prevPosts => {
-      const updated = prevPosts.map(post => {
-        if (post.id === postId) {
-          const likedByMe = !post.likedByMe;
-          return {
-            ...post,
-            likes: likedByMe ? post.likes + 1 : post.likes - 1,
-            likedByMe
-          };
-        }
-        return post;
+  // Like / Unlike action on post (Cloud Firestore synchronized)
+  const handleLikePost = async (postId: string) => {
+    const isAlreadyLiked = likedPostIds.includes(postId);
+    const targetPost = rawPosts.find(p => p.id === postId);
+    if (!targetPost) return;
+
+    const postRef = doc(db, 'posts', postId);
+    const newLikesCount = isAlreadyLiked ? Math.max(0, targetPost.likes - 1) : targetPost.likes + 1;
+    
+    try {
+      await updateDoc(postRef, {
+        likes: newLikesCount
       });
-      return updated;
-    });
+
+      setLikedPostIds(prev => 
+        isAlreadyLiked ? prev.filter(id => id !== postId) : [...prev, postId]
+      );
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `posts/${postId}`);
+    }
   };
 
   // Saved posts state & toggle handler
@@ -168,30 +245,52 @@ export default function App() {
     });
   };
 
-  // Create new post in feed
-  const handleAddPost = (content: string, field: string) => {
-    const newPost: Post = {
-      id: `custom_${Date.now()}`,
+  // Create new post in feed in Cloud Firestore
+  const handleAddPost = async (content: string, field: string, image?: string, location?: string) => {
+    const newPostData = {
       author: preferences.username,
       authorAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`,
       time: "Şimdi",
       content,
       likes: 0,
-      field
+      field,
+      department: preferences.department || null,
+      image: image || null,
+      location: location || null,
+      createdAt: new Date().toISOString()
     };
-    
-    // Save in custom posts list
-    const savedCustom = localStorage.getItem('ytu_custom_posts');
-    let customList = [];
-    if (savedCustom) {
-      try {
-        customList = JSON.parse(savedCustom);
-      } catch (e) {}
-    }
-    customList.unshift(newPost);
-    localStorage.setItem('ytu_custom_posts', JSON.stringify(customList));
 
-    setPosts(prev => [newPost, ...prev]);
+    try {
+      await addDoc(collection(db, 'posts'), newPostData);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, 'posts');
+    }
+  };
+
+  // Add comment to a post in Cloud Firestore
+  const handleAddComment = async (postId: string, commentContent: string) => {
+    if (!commentContent.trim()) return;
+    const targetPost = rawPosts.find(p => p.id === postId);
+    if (!targetPost) return;
+
+    const postRef = doc(db, 'posts', postId);
+    const newComment = {
+      id: Math.random().toString(36).substring(2, 9),
+      author: preferences.username,
+      authorAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`,
+      content: commentContent.trim(),
+      createdAt: new Date().toISOString()
+    };
+
+    const updatedComments = [...(targetPost.comments || []), newComment];
+
+    try {
+      await updateDoc(postRef, {
+        comments: updatedComments
+      });
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `posts/${postId}`);
+    }
   };
 
   // Quick remove of a negative filter / excluded category
@@ -481,6 +580,7 @@ export default function App() {
               preferences={preferences}
               onLikePost={handleLikePost}
               onAddPost={handleAddPost}
+              onAddComment={handleAddComment}
               onRemoveExclude={handleRemoveExclude}
               savedPostIds={savedPostIds}
               onToggleSavePost={handleToggleSavePost}
@@ -494,9 +594,6 @@ export default function App() {
             
             {/* Campus Weather */}
             <WeatherWidget />
-
-            {/* Yemekhane Menüsü */}
-            <YemekhaneWidget />
 
             {/* Exam Schedule (Filtered) */}
             <ExamWidget 

@@ -20,14 +20,16 @@ import {
   Search,
   FilterX,
   Plus,
-  Bookmark
+  Bookmark,
+  X
 } from 'lucide-react';
 
 interface FeedProps {
   posts: Post[];
   preferences: UserPreferences;
   onLikePost: (postId: string) => void;
-  onAddPost: (content: string, field: string) => void;
+  onAddPost: (content: string, field: string, image?: string, location?: string) => void;
+  onAddComment?: (postId: string, commentContent: string) => void;
   onRemoveExclude: (category: string) => void;
   savedPostIds: string[];
   onToggleSavePost: (postId: string) => void;
@@ -40,6 +42,7 @@ export default function Feed({
   preferences, 
   onLikePost, 
   onAddPost, 
+  onAddComment,
   onRemoveExclude,
   savedPostIds = [],
   onToggleSavePost,
@@ -50,6 +53,166 @@ export default function Feed({
   const [selectedField, setSelectedField] = useState(INTEREST_FIELDS[0].id);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'dept' | 'clubs'>('all');
+
+  // Track expanded comments section per post, and active draft per post
+  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
+  const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
+  const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+  // Photo & Location attachment states
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [attachedImage, setAttachedImage] = useState<string | null>(null);
+  const [attachedLocation, setAttachedLocation] = useState<string | null>(null);
+  const [isLocationMenuOpen, setIsLocationMenuOpen] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [gpsError, setGpsError] = useState<string | null>(null);
+
+  const CAMPUS_LOCATIONS = [
+    "📍 Davutpaşa - Yemekhane",
+    "📍 Davutpaşa - Kütüphane",
+    "📍 Davutpaşa - Otağ-ı Hümayun",
+    "📍 Davutpaşa - Teknopark",
+    "📍 Davutpaşa - Mediko-Sosyal",
+    "📍 Beşiktaş - Tarihi Bina (A Blok)",
+    "📍 Beşiktaş - Çukur Saray",
+    "📍 Beşiktaş - Yemekhane"
+  ];
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const max_size = 800; // max size limit for width or height
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > max_size) {
+              height *= max_size / width;
+              width = max_size;
+            }
+          } else {
+            if (height > max_size) {
+              width *= max_size / height;
+              height = max_size;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            // Compress image to JPEG at 60% quality (greatly reduces size to ~40KB - 80KB)
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+            setAttachedImage(compressedBase64);
+          } else {
+            setAttachedImage(event.target?.result as string);
+          }
+        };
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleTriggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleGetGPSLocation = () => {
+    if (!navigator.geolocation) {
+      setGpsError("Tarayıcınız konum özelliğini desteklemiyor. Lütfen başka bir tarayıcı deneyin veya listeden manuel konum seçin.");
+      return;
+    }
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        // Detect campus
+        const distBeşiktaş = Math.sqrt(Math.pow(latitude - 41.0421, 2) + Math.pow(longitude - 29.0091, 2));
+        const distDavutpaşa = Math.sqrt(Math.pow(latitude - 41.0262, 2) + Math.pow(longitude - 28.8914, 2));
+        
+        let label = "";
+        if (distBeşiktaş < 0.015) {
+          label = "📍 Beşiktaş Kampüsü (GPS)";
+          setAttachedLocation(label);
+          setIsLocating(false);
+          setIsLocationMenuOpen(false);
+        } else if (distDavutpaşa < 0.015) {
+          label = "📍 Davutpaşa Kampüsü (GPS)";
+          setAttachedLocation(label);
+          setIsLocating(false);
+          setIsLocationMenuOpen(false);
+        } else {
+          // Reverse-geocode to human-readable place name for locations outside YTÜ
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=tr`)
+            .then((res) => {
+              if (!res.ok) throw new Error("Nominatim API error");
+              return res.json();
+            })
+            .then((data) => {
+              const addr = data?.address;
+              if (addr) {
+                const mahalleName = addr.neighbourhood || addr.suburb || addr.village || addr.quarter || "";
+                const ilceName = addr.town || addr.city_district || addr.district || "";
+                const ilName = addr.province || addr.city || "";
+
+                const parts = [];
+                if (mahalleName) {
+                  let m = mahalleName;
+                  if (!m.toLowerCase().includes("mah")) {
+                    m = `${m} Mah.`;
+                  }
+                  parts.push(m);
+                }
+                if (ilceName && ilceName !== mahalleName) {
+                  parts.push(ilceName);
+                }
+                if (ilName && ilName !== ilceName && ilName !== mahalleName) {
+                  parts.push(ilName);
+                }
+
+                let placeName = parts.filter(Boolean).join(", ");
+                if (!placeName) {
+                  placeName = data.display_name?.split(",").slice(0, 3).join(",") || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+                }
+                setAttachedLocation(`📍 ${placeName}`);
+              } else {
+                setAttachedLocation(`📍 YTÜ Dışı Konum (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+              }
+              setIsLocating(false);
+              setIsLocationMenuOpen(false);
+            })
+            .catch((err) => {
+              console.error("Geocoding error:", err);
+              setAttachedLocation(`📍 YTÜ Dışı Konum (${latitude.toFixed(4)}, ${longitude.toFixed(4)})`);
+              setIsLocating(false);
+              setIsLocationMenuOpen(false);
+            });
+        }
+      },
+      (error) => {
+        console.error(error);
+        setIsLocating(false);
+        let errorMsg = "GPS konumunuza erişilemedi. Lütfen tarayıcı ve sistem konum izinlerini kontrol edin ya da listeden manuel olarak bir nokta seçin.";
+        if (error.code === error.PERMISSION_DENIED) {
+          errorMsg = "Konum erişim izni reddedildi. Tarayıcı adres çubuğundaki kilit simgesine tıklayarak konum iznini etkinleştirebilirsiniz.";
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          errorMsg = "Konum bilgisi şu anda alınamıyor. GPS sinyalinin güçlü olduğundan emin olun veya listeden seçim yapın.";
+        } else if (error.code === error.TIMEOUT) {
+          errorMsg = "Konum alma isteği zaman aşımına uğradı. Lütfen tekrar deneyin ya da listeden seçim yapın.";
+        }
+        setGpsError(errorMsg);
+      },
+      { enableHighAccuracy: true, timeout: 5000 }
+    );
+  };
 
   // Filter posts based on:
   // 1. Saved status (if showOnlySaved is active)
@@ -109,12 +272,56 @@ export default function Feed({
   const handleSharePostSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPostText.trim()) return;
-    onAddPost(newPostText.trim(), selectedField);
+    onAddPost(newPostText.trim(), selectedField, attachedImage || undefined, attachedLocation || undefined);
     setNewPostText('');
+    setAttachedImage(null);
+    setAttachedLocation(null);
   };
 
   return (
     <div className="space-y-6">
+      
+      {/* Dynamic Geolocation Error Pop-up Modal */}
+      <AnimatePresence>
+        {gpsError && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 15 }}
+              transition={{ type: 'spring', duration: 0.4 }}
+              className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4"
+            >
+              <div className="flex items-start gap-3.5">
+                <div className="p-2.5 bg-rose-500/15 text-rose-500 rounded-xl shrink-0">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+                <div className="space-y-1.5 flex-1">
+                  <h3 className="font-bold text-slate-900 dark:text-white text-sm">GPS Konumuna Erişilemedi</h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {gpsError}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 flex justify-end gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setGpsError(null)}
+                  className="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold rounded-xl transition cursor-pointer"
+                >
+                  Anladım, Kapat
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       
       {/* 1. STORIES (Active Clubs) */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800/80">
@@ -224,7 +431,7 @@ export default function Feed({
               className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700"
               alt="Avatar"
             />
-            <div className="flex-1">
+            <div className="flex-1 space-y-2">
               <textarea
                 value={newPostText}
                 onChange={(e) => setNewPostText(e.target.value)}
@@ -232,8 +439,92 @@ export default function Feed({
                 rows={2}
                 className="w-full bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700/50 rounded-xl p-3 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 resize-none transition"
               />
+
+              {/* Preview of Attached Image & Location */}
+              {(attachedImage || attachedLocation) && (
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {attachedImage && (
+                    <div className="relative group rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm max-w-[160px] animate-in fade-in-50 duration-150">
+                      <img src={attachedImage} className="max-h-24 object-cover rounded-xl" alt="Attached preview" />
+                      <button 
+                        type="button"
+                        onClick={() => setAttachedImage(null)}
+                        className="absolute top-1 right-1 bg-slate-950/70 hover:bg-rose-600 text-white p-1 rounded-full transition-colors cursor-pointer w-5 h-5 flex items-center justify-center text-[10px] font-bold"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+
+                  {attachedLocation && (
+                    <div className="bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 shadow-sm animate-in fade-in-50 duration-150">
+                      <MapPin className="w-3.5 h-3.5 shrink-0" />
+                      <span className="truncate max-w-[180px]">{attachedLocation}</span>
+                      <button 
+                        type="button"
+                        onClick={() => setAttachedLocation(null)}
+                        className="hover:text-rose-700 dark:hover:text-rose-300 font-extrabold ml-1 cursor-pointer text-[10px]"
+                        title="Konumu Kaldır"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
+
+          {/* Hidden File Input */}
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            accept="image/*" 
+            className="hidden" 
+            onChange={handleImageChange} 
+          />
+
+          {/* Location Selector Menu */}
+          {isLocationMenuOpen && (
+            <div className="bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800/80 p-3 rounded-xl space-y-2.5 animate-in fade-in-50 duration-200">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Kampüs Konumu Seç</span>
+                <button 
+                  type="button"
+                  onClick={() => setIsLocationMenuOpen(false)}
+                  className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold"
+                >
+                  Kapat
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={handleGetGPSLocation}
+                  disabled={isLocating}
+                  className="col-span-2 py-2 px-3 bg-amber-400 hover:bg-amber-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 text-slate-950 disabled:text-slate-400 font-bold text-[11px] rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  {isLocating ? 'GPS Konumu Alınıyor...' : 'Mevcut GPS Konumumu Kullan'}
+                </button>
+
+                {CAMPUS_LOCATIONS.map(loc => (
+                  <button
+                    key={loc}
+                    type="button"
+                    onClick={() => {
+                      setAttachedLocation(loc);
+                      setIsLocationMenuOpen(false);
+                    }}
+                    className="p-2 text-left bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 hover:border-amber-400 dark:hover:border-amber-400 text-[11px] font-semibold text-slate-700 dark:text-slate-300 rounded-lg transition truncate cursor-pointer"
+                  >
+                    {loc.replace("📍 ", "")}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-wrap justify-between items-center pt-2.5 border-t border-slate-100 dark:border-slate-700/60 gap-2">
             
@@ -255,15 +546,21 @@ export default function Feed({
             <div className="flex items-center gap-3">
               <button 
                 type="button" 
-                onClick={() => alert("Görsel yükleme simüle edilmiştir.")}
-                className="text-slate-400 hover:text-emerald-500 transition p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                onClick={handleTriggerFileInput}
+                className={`transition p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer ${
+                  attachedImage ? 'text-emerald-500 bg-emerald-500/10' : 'text-slate-400 hover:text-emerald-500'
+                }`}
+                title="Fotoğraf Ekle"
               >
                 <Image className="w-4 h-4" />
               </button>
               <button 
                 type="button" 
-                onClick={() => alert("Konum seçimi simüle edilmiştir.")}
-                className="text-slate-400 hover:text-rose-500 transition p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+                onClick={() => setIsLocationMenuOpen(!isLocationMenuOpen)}
+                className={`transition p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer ${
+                  attachedLocation ? 'text-rose-500 bg-rose-500/10' : 'text-slate-400 hover:text-rose-500'
+                }`}
+                title="Konum Ekle"
               >
                 <MapPin className="w-4 h-4" />
               </button>
@@ -394,7 +691,18 @@ export default function Feed({
                           {post.author}
                           {post.club && <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded">Kulüp</span>}
                         </p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">{post.time}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                          <span>{post.time}</span>
+                          {post.location && (
+                            <>
+                              <span className="text-slate-300 dark:text-slate-700">•</span>
+                              <span className="text-rose-500 font-semibold flex items-center gap-0.5">
+                                <MapPin className="w-3 h-3" />
+                                {post.location}
+                              </span>
+                            </>
+                          )}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -403,6 +711,21 @@ export default function Feed({
                   <p className="text-slate-700 dark:text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">
                     {post.content}
                   </p>
+
+                  {/* Attached Image if any */}
+                  {post.image && (
+                    <div 
+                      onClick={() => setPreviewImage(post.image || null)}
+                      className="mt-3 rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800/80 shadow-sm cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all bg-slate-50 dark:bg-slate-900/40"
+                    >
+                      <img 
+                        src={post.image} 
+                        className="w-full h-auto max-h-[500px] object-contain mx-auto" 
+                        alt="Post attachment" 
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                  )}
  
                   {/* Actions Bar */}
                   <div className="flex items-center space-x-6 border-t border-slate-100 dark:border-slate-700/50 pt-3 mt-4">
@@ -419,22 +742,34 @@ export default function Feed({
                     </button>
  
                     <button 
-                      onClick={() => alert("Yorum özelliği simüle edilmiştir.")}
-                      className="flex items-center space-x-1.5 text-xs font-semibold text-slate-400 hover:text-blue-500 transition"
+                      onClick={() => setExpandedComments(prev => ({ ...prev, [post.id]: !prev[post.id] }))}
+                      className={`flex items-center space-x-1.5 text-xs font-semibold transition ${
+                        expandedComments[post.id] ? 'text-blue-500' : 'text-slate-400 hover:text-blue-500'
+                      }`}
                     >
                       <MessageSquare className="w-4 h-4" />
-                      <span>Yorum Yap</span>
+                      <span>Yorumlar ({(post.comments || []).length})</span>
                     </button>
  
                     <button 
                       onClick={() => {
-                        navigator.clipboard.writeText(`Yıldız Connect: "${post.content.slice(0, 50)}..."`);
-                        alert("Paylaşım bağlantısı panoya kopyalandı!");
+                        let projectUrl = window.location.origin;
+                        if (projectUrl.includes("localhost") || projectUrl.includes("ais-dev") || projectUrl.includes("ais-pre") || projectUrl.includes("127.0.0.1")) {
+                          projectUrl = "https://yildizconnect-950166797073.europe-west2.run.app";
+                        }
+                        const shareText = `Yıldız Connect Paylaşımı:\n"${post.content}"\n- @${post.author} (${post.field})\n\nBuradan Keşfet: ${projectUrl}\n\nYTÜ Kampüs Sosyal Ağı 🌟`;
+                        navigator.clipboard.writeText(shareText);
+                        setCopiedPostId(post.id);
+                        setTimeout(() => {
+                          setCopiedPostId(null);
+                        }, 2000);
                       }}
-                      className="flex items-center space-x-1.5 text-xs font-semibold text-slate-400 hover:text-emerald-500 transition"
+                      className={`flex items-center space-x-1.5 text-xs font-semibold transition ${
+                        copiedPostId === post.id ? 'text-emerald-500 font-bold' : 'text-slate-400 hover:text-emerald-500'
+                      }`}
                     >
-                      <Share2 className="w-4 h-4" />
-                      <span className="hidden sm:inline">Paylaş</span>
+                      <Share2 className={`w-4 h-4 ${copiedPostId === post.id ? 'stroke-emerald-500' : ''}`} />
+                      <span>{copiedPostId === post.id ? 'Kopyalandı! 🌟' : 'Paylaş'}</span>
                     </button>
 
                     <button 
@@ -450,12 +785,126 @@ export default function Feed({
                       <span>{isSaved ? 'Kaydedildi' : 'Kaydet'}</span>
                     </button>
                   </div>
+
+                  {/* Comments Section */}
+                  <AnimatePresence>
+                    {expandedComments[post.id] && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="border-t border-slate-100 dark:border-slate-800/80 mt-4 pt-4 space-y-4 overflow-hidden"
+                      >
+                        {/* Existing Comments */}
+                        <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+                          {(post.comments || []).length === 0 ? (
+                            <p className="text-xs text-slate-400 dark:text-slate-500 italic text-center py-2">
+                              Henüz yorum yapılmamış. İlk yorumu sen yap! 💬
+                            </p>
+                          ) : (
+                            (post.comments || []).map((cmt) => (
+                              <div key={cmt.id} className="flex gap-2.5 items-start text-xs bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-xl border border-slate-100/50 dark:border-slate-800/50">
+                                <img 
+                                  src={cmt.authorAvatar} 
+                                  className="w-7 h-7 rounded-full border border-slate-100 dark:border-slate-700/80"
+                                  alt={cmt.author}
+                                />
+                                <div className="flex-1">
+                                  <div className="flex justify-between items-center">
+                                    <span className="font-bold text-slate-800 dark:text-amber-400">@{cmt.author}</span>
+                                    <span className="text-[9px] text-slate-400">
+                                      {cmt.createdAt ? new Date(cmt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Şimdi'}
+                                    </span>
+                                  </div>
+                                  <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                                    {cmt.content}
+                                  </p>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+
+                        {/* Comment Input form */}
+                        <form 
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            const draft = commentDrafts[post.id] || '';
+                            if (draft.trim() && onAddComment) {
+                              onAddComment(post.id, draft);
+                              setCommentDrafts(prev => ({ ...prev, [post.id]: '' }));
+                            }
+                          }}
+                          className="flex items-center gap-2 mt-2"
+                        >
+                          <input
+                            type="text"
+                            value={commentDrafts[post.id] || ''}
+                            onChange={(e) => setCommentDrafts(prev => ({ ...prev, [post.id]: e.target.value }))}
+                            placeholder="Yorumunuzu yazın..."
+                            className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                          />
+                          <button
+                            type="submit"
+                            disabled={!(commentDrafts[post.id] || '').trim()}
+                            className="bg-amber-400 hover:bg-amber-500 dark:bg-amber-500 dark:hover:bg-amber-600 text-slate-900 font-bold px-3 py-2 rounded-xl transition-all flex items-center gap-1 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                            <span>Gönder</span>
+                          </button>
+                        </form>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               );
             })
           )}
         </AnimatePresence>
       </div>
+
+      {/* Full-Screen Image Preview Modal */}
+      <AnimatePresence>
+        {previewImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPreviewImage(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 cursor-zoom-out"
+          >
+            {/* Close Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setPreviewImage(null);
+              }}
+              className="absolute top-6 right-6 p-2 rounded-full bg-slate-900/80 border border-slate-700/50 text-white hover:bg-slate-800 transition-all cursor-pointer hover:scale-105 active:scale-95"
+              title="Kapat"
+            >
+              <X className="w-6 h-6" />
+            </button>
+
+            {/* Image Container with Animation */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-full max-h-[85vh] flex items-center justify-center rounded-lg"
+            >
+              <img
+                src={previewImage}
+                alt="Büyük boy görsel"
+                className="max-w-full max-h-[85vh] object-contain rounded-lg border border-slate-800 shadow-2xl select-none cursor-default"
+                referrerPolicy="no-referrer"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

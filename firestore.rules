@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global safety net: default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // Hardened posts collection rules
+    match /posts/{postId} {
+      allow read: if true;
+      
+      allow create: if (
+        isValidPost(incoming())
+        && isValidId(postId)
+      );
+      
+      allow update: if (
+        isValidId(postId)
+        && (
+          // Action: Upvote/Like or Comments update
+          incoming().diff(existing()).affectedKeys().hasOnly(['likes', 'comments'])
+        )
+        && (
+          !incoming().diff(existing()).affectedKeys().hasAny(['likes'])
+          || (incoming().likes is int && incoming().likes >= 0)
+        )
+        && (
+          !incoming().diff(existing()).affectedKeys().hasAny(['comments'])
+          || (incoming().comments is list)
+        )
+      );
+      
+      allow delete: if false; // Users cannot delete posts from client SDK
+    }
+    
+    // Reusable, hardened validation functions
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    
+    function isValidId(id) {
+      return id is string && id.size() <= 128;
+    }
+    
+    function isValidPost(data) {
+      return (
+        data.get('author', '') is string && data.get('author', '').size() > 0
+        && data.get('content', '') is string && data.get('content', '').size() > 0
+        && data.get('likes', 0) is int
+        && data.get('field', '') is string
+        && data.get('createdAt', '') is string
+        && (data.get('comments', null) == null || data.comments is list)
+      );
+    }
+  }
+}
