@@ -65,5 +65,7 @@ export interface Story {
   image?: string;
   video?: string;
   location?: string;
+  textX?: number;
+  textY?: number;
 }
 

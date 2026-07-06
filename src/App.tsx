@@ -211,7 +211,9 @@ export default function App() {
               gradientClass: data.gradientClass || "from-slate-700 to-slate-900",
               image: data.image || undefined,
               video: data.video || undefined,
-              location: data.location || undefined
+              location: data.location || undefined,
+              textX: data.textX !== undefined ? data.textX : 50,
+              textY: data.textY !== undefined ? data.textY : 50
             });
           }
         });
@@ -340,7 +342,7 @@ export default function App() {
   };
 
   // Create new story in Cloud Firestore
-  const handleAddStory = async (content: string, gradientClass: string, image?: string, video?: string, location?: string) => {
+  const handleAddStory = async (content: string, gradientClass: string, image?: string, video?: string, location?: string, textX?: number, textY?: number) => {
     const newStoryData = {
       author: preferences.username || "Yıldızlı",
       authorAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username || "Yildizli")}&background=EAAA00&color=003057`,
@@ -349,6 +351,8 @@ export default function App() {
       image: image || null,
       video: video || null,
       location: location || null,
+      textX: textX !== undefined ? textX : 50,
+      textY: textY !== undefined ? textY : 50,
       createdAt: new Date().toISOString()
     };
 

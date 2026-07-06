@@ -38,7 +38,7 @@ interface FeedProps {
   onToggleSavePost: (postId: string) => void;
   showOnlySaved: boolean;
   onClearSavedFilter: () => void;
-  onAddStory?: (content: string, gradientClass: string, image?: string, video?: string, location?: string) => void;
+  onAddStory?: (content: string, gradientClass: string, image?: string, video?: string, location?: string, textX?: number, textY?: number) => void;
 }
 
 export default function Feed({ 
@@ -83,6 +83,10 @@ export default function Feed({
   const [isStoryLocationMenuOpen, setIsStoryLocationMenuOpen] = useState(false);
   const [isStoryLocating, setIsStoryLocating] = useState(false);
   const [storyGpsError, setStoryGpsError] = useState<string | null>(null);
+  const [textX, setTextX] = useState(50);
+  const [textY, setTextY] = useState(50);
+  const previewConstraintsRef = React.useRef<HTMLDivElement>(null);
+  const viewerConstraintsRef = React.useRef<HTMLDivElement>(null);
 
   // Story Autoplay & Progress effect
   React.useEffect(() => {
@@ -1107,6 +1111,8 @@ export default function Feed({
                   setNewStoryLocation(null);
                   setIsStoryLocationMenuOpen(false);
                   setStoryGpsError(null);
+                  setTextX(50);
+                  setTextY(50);
                 }}
                 className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition"
               >
@@ -1117,8 +1123,11 @@ export default function Feed({
 
               {/* Preview Box */}
               <div className="mb-4">
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Hikaye Önizleme</p>
-                <div className={`w-full aspect-[9/16] rounded-2xl bg-gradient-to-tr ${selectedGradient} flex flex-col justify-between p-6 text-white shadow-inner select-none relative overflow-hidden`}>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-2">Hikaye Önizleme (Yazıyı sürükleyebilirsiniz)</p>
+                <div 
+                  ref={previewConstraintsRef}
+                  className={`w-full aspect-[9/16] rounded-2xl bg-gradient-to-tr ${selectedGradient} flex flex-col justify-between p-6 text-white shadow-inner select-none relative overflow-hidden`}
+                >
                   {/* Background photo preview if any */}
                   {newStoryImage && (
                     <img 
@@ -1163,11 +1172,38 @@ export default function Feed({
                     </div>
                   </div>
 
-                  <div className="flex-1 flex items-center justify-center my-4 z-10">
-                    <p className="text-base md:text-lg font-extrabold text-center leading-relaxed tracking-wide drop-shadow-md break-words max-w-full">
-                      {newStoryText || "Hikayeniz buraya yazılacak..."}
-                    </p>
-                  </div>
+                  {/* Empty flex spacer to maintain layout */}
+                  <div className="flex-1" />
+
+                  {/* Draggable Text Element positioned absolute relative to outer container */}
+                  <motion.p
+                    key={`${textX}-${textY}`}
+                    drag
+                    dragConstraints={previewConstraintsRef}
+                    dragElastic={0.05}
+                    dragMomentum={false}
+                    onDragEnd={(event, info) => {
+                      if (previewConstraintsRef.current) {
+                        const rect = previewConstraintsRef.current.getBoundingClientRect();
+                        const relativeX = info.point.x - rect.left;
+                        const relativeY = info.point.y - rect.top;
+                        const xPct = Math.round(Math.min(Math.max((relativeX / rect.width) * 100, 10), 90));
+                        const yPct = Math.round(Math.min(Math.max((relativeY / rect.height) * 100, 10), 90));
+                        setTextX(xPct);
+                        setTextY(yPct);
+                      }
+                    }}
+                    style={{
+                      position: 'absolute',
+                      left: `${textX}%`,
+                      top: `${textY}%`,
+                      x: "-50%",
+                      y: "-50%",
+                    }}
+                    className="absolute z-20 text-base md:text-lg font-extrabold text-center leading-relaxed tracking-wide drop-shadow-md break-words max-w-[85%] cursor-grab active:cursor-grabbing select-none"
+                  >
+                    {newStoryText || "Hikayeniz buraya yazılacak... (Sürükleyebilirsiniz)"}
+                  </motion.p>
 
                   <div className="text-[10px] text-center text-white/50 z-10">
                     24 saat boyunca görünür kalacaktır.
@@ -1435,6 +1471,8 @@ export default function Feed({
                       setNewStoryLocation(null);
                       setIsStoryLocationMenuOpen(false);
                       setStoryGpsError(null);
+                      setTextX(50);
+                      setTextY(50);
                     }}
                     className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold py-3 rounded-xl transition text-xs cursor-pointer text-center"
                   >
@@ -1451,7 +1489,9 @@ export default function Feed({
                           selectedGradient,
                           newStoryImage || undefined,
                           newStoryVideo || undefined,
-                          newStoryLocation || undefined
+                          newStoryLocation || undefined,
+                          textX,
+                          textY
                         );
                       }
                       setIsAddStoryOpen(false);
@@ -1462,6 +1502,8 @@ export default function Feed({
                       setNewStoryLocation(null);
                       setIsStoryLocationMenuOpen(false);
                       setStoryGpsError(null);
+                      setTextX(50);
+                      setTextY(50);
                     }}
                     className="flex-1 bg-amber-400 hover:bg-amber-500 dark:bg-amber-500 dark:hover:bg-amber-600 text-slate-900 font-extrabold py-3 rounded-xl transition flex items-center justify-center gap-1.5 text-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
@@ -1484,7 +1526,10 @@ export default function Feed({
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md p-4"
           >
-            <div className="relative max-w-md w-full aspect-[9/16] rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between p-6 text-white bg-slate-900">
+            <div 
+              ref={viewerConstraintsRef}
+              className="relative max-w-md w-full aspect-[9/16] rounded-3xl overflow-hidden shadow-2xl flex flex-col justify-between p-6 text-white bg-slate-900"
+            >
               {/* Tap zones for going back/forward */}
               <div 
                 onClick={() => {
@@ -1507,15 +1552,15 @@ export default function Feed({
                 className="absolute top-0 right-0 w-1/4 h-full z-10 cursor-pointer" 
               />
 
-              {/* Inside layout with correct styles based on story */}
+              {/* Inside layout with correct styles based on story (using positive z-indices) */}
               {stories[activeStoryIndex]?.gradientClass && (
-                <div className={`absolute inset-0 bg-gradient-to-tr -z-10 ${stories[activeStoryIndex].gradientClass}`} />
+                <div className={`absolute inset-0 bg-gradient-to-tr z-0 ${stories[activeStoryIndex].gradientClass}`} />
               )}
 
               {stories[activeStoryIndex]?.image && (
                 <img 
                   src={stories[activeStoryIndex].image} 
-                  className="absolute inset-0 w-full h-full object-cover -z-10 select-none pointer-events-none" 
+                  className="absolute inset-0 w-full h-full object-cover z-0 select-none pointer-events-none" 
                   alt="Story content" 
                   referrerPolicy="no-referrer"
                 />
@@ -1524,7 +1569,7 @@ export default function Feed({
               {stories[activeStoryIndex]?.video && (
                 <video 
                   src={stories[activeStoryIndex].video} 
-                  className="absolute inset-0 w-full h-full object-cover -z-10 select-none pointer-events-none" 
+                  className="absolute inset-0 w-full h-full object-cover z-0 select-none pointer-events-none" 
                   autoPlay 
                   loop 
                   muted 
@@ -1534,7 +1579,7 @@ export default function Feed({
 
               {/* Backdrop gradient overlay for readability when media is present */}
               {(stories[activeStoryIndex]?.image || stories[activeStoryIndex]?.video) && (
-                <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/20 to-black/60 -z-5 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/20 to-black/70 z-5 pointer-events-none" />
               )}
 
               {/* Top controls & indicators */}
@@ -1600,12 +1645,26 @@ export default function Feed({
                 </div>
               </div>
 
-              {/* Story Content Centered */}
-              <div className="flex-1 flex items-center justify-center py-6 px-4 z-20 pointer-events-none">
-                <p className="text-xl md:text-2xl font-black text-center leading-relaxed tracking-wide drop-shadow-lg break-words max-w-full whitespace-pre-wrap">
-                  {stories[activeStoryIndex]?.content}
-                </p>
-              </div>
+              {/* Empty flex spacer to maintain layout */}
+              <div className="flex-1" />
+
+              {/* Story Content absolute positioned based on coordinates, and user can also drag it! */}
+              <motion.p
+                drag
+                dragConstraints={viewerConstraintsRef}
+                dragElastic={0.05}
+                dragMomentum={false}
+                style={{
+                  position: 'absolute',
+                  left: `${stories[activeStoryIndex]?.textX ?? 50}%`,
+                  top: `${stories[activeStoryIndex]?.textY ?? 50}%`,
+                  x: "-50%",
+                  y: "-50%"
+                }}
+                className="absolute z-25 text-xl md:text-2xl font-black text-center leading-relaxed tracking-wide drop-shadow-lg break-words max-w-[85%] whitespace-pre-wrap cursor-grab active:cursor-grabbing select-none"
+              >
+                {stories[activeStoryIndex]?.content}
+              </motion.p>
 
               {/* Bottom Nav buttons */}
               <div className="flex justify-between items-center z-35 text-xs">
