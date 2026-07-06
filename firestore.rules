@@ -34,6 +34,18 @@ service cloud.firestore {
       
       allow delete: if false; // Users cannot delete posts from client SDK
     }
+
+    // Hardened stories collection rules
+    match /stories/{storyId} {
+      allow read: if true;
+      
+      allow create: if (
+        isValidStory(incoming())
+        && isValidId(storyId)
+      );
+      
+      allow update, delete: if false;
+    }
     
     // Reusable, hardened validation functions
     function incoming() { return request.resource.data; }
@@ -51,6 +63,14 @@ service cloud.firestore {
         && data.get('field', '') is string
         && data.get('createdAt', '') is string
         && (data.get('comments', null) == null || data.comments is list)
+      );
+    }
+
+    function isValidStory(data) {
+      return (
+        data.get('author', '') is string && data.get('author', '').size() > 0
+        && data.get('content', '') is string && data.get('content', '').size() > 0
+        && data.get('createdAt', '') is string
       );
     }
   }

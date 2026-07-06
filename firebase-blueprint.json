@@ -52,12 +52,45 @@
         }
       },
       "required": ["author", "content", "likes", "field", "createdAt"]
+    },
+    "Story": {
+      "title": "Story",
+      "description": "Temporary 24h campus stories",
+      "type": "object",
+      "properties": {
+        "author": {
+          "type": "string",
+          "description": "Username of the author"
+        },
+        "authorAvatar": {
+          "type": "string",
+          "description": "Avatar URL of the author"
+        },
+        "content": {
+          "type": "string",
+          "description": "Text content of the story"
+        },
+        "gradientClass": {
+          "type": "string",
+          "description": "Gradient background class combination"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp when story was created"
+        }
+      },
+      "required": ["author", "content", "createdAt"]
     }
   },
   "firestore": {
     "/posts/{postId}": {
       "schema": "Post",
       "description": "Collection of community and official posts in the feed"
+    },
+    "/stories/{storyId}": {
+      "schema": "Story",
+      "description": "Collection of temporary campus stories"
     }
   }
 }

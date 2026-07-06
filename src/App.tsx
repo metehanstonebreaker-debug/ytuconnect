@@ -11,7 +11,7 @@ import WeatherWidget from './components/WeatherWidget';
 import ExamWidget from './components/ExamWidget';
 import Chatbot from './components/Chatbot';
 import GpaCalculator from './components/GpaCalculator';
-import { UserPreferences, Post } from './types';
+import { UserPreferences, Post, Story } from './types';
 import { MOCK_POSTS, DEPARTMENTS } from './mockData';
 import { collection, onSnapshot, query, orderBy, addDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from './firebase';
@@ -68,6 +68,9 @@ export default function App() {
 
   // 3. Raw posts from Firestore cloud database
   const [rawPosts, setRawPosts] = useState<Post[]>([]);
+
+  // 4. Raw stories from Firestore cloud database
+  const [rawStories, setRawStories] = useState<Story[]>([]);
 
   // Local record of which posts have been liked by the user to calculate likedByMe on-the-fly
   const [likedPostIds, setLikedPostIds] = useState<string[]>(() => {
@@ -147,6 +150,75 @@ export default function App() {
       }
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'posts');
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Sync stories from Cloud Firestore in real-time
+  useEffect(() => {
+    const storiesRef = collection(db, 'stories');
+    const q = query(storiesRef, orderBy('createdAt', 'desc'));
+
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      if (snapshot.empty) {
+        console.log("Cloud stories database is empty. Seeding some initial stories...");
+        const initialStories = [
+          {
+            author: "SKY LAB Kulübü",
+            authorAvatar: "https://ui-avatars.com/api/?name=SKY+LAB&background=003057&color=EAAA00",
+            content: "Yarın saat 14:00'te online Python workshopu var, kaçırmayın! 💻",
+            gradientClass: "from-blue-600 via-indigo-600 to-purple-600",
+            createdAt: new Date().toISOString()
+          },
+          {
+            author: "Müzik Kulübü",
+            authorAvatar: "https://ui-avatars.com/api/?name=Muzik&background=EAAA00&color=003057",
+            content: "Beşiktaş Kampüsü orta bahçede akustik dinletimiz başladı! 🎸✨",
+            gradientClass: "from-amber-500 via-rose-500 to-indigo-500",
+            createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString()
+          },
+          {
+            author: "IEEE YTÜ",
+            authorAvatar: "https://ui-avatars.com/api/?name=IEEE&background=003057&color=EAAA00",
+            content: "Sektör Günleri etkinliği için kayıtlar açıldı! Link bio'da. ⚡🚀",
+            gradientClass: "from-teal-500 to-emerald-500",
+            createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString()
+          }
+        ];
+
+        for (const story of initialStories) {
+          try {
+            await addDoc(storiesRef, story);
+          } catch (err) {
+            console.error("Error seeding story:", err);
+          }
+        }
+      } else {
+        const fetchedStories: Story[] = [];
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          // Filter out stories older than 24 hours
+          const createdAtTime = new Date(data.createdAt).getTime();
+          const isExpired = Date.now() - createdAtTime > 24 * 3600 * 1000;
+          if (!isExpired) {
+            fetchedStories.push({
+              id: doc.id,
+              author: data.author,
+              authorAvatar: data.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.author)}`,
+              content: data.content,
+              createdAt: data.createdAt,
+              gradientClass: data.gradientClass || "from-slate-700 to-slate-900",
+              image: data.image || undefined,
+              video: data.video || undefined,
+              location: data.location || undefined
+            });
+          }
+        });
+        setRawStories(fetchedStories);
+      }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.GET, 'stories');
     });
 
     return () => unsubscribe();
@@ -264,6 +336,26 @@ export default function App() {
       await addDoc(collection(db, 'posts'), newPostData);
     } catch (e) {
       handleFirestoreError(e, OperationType.CREATE, 'posts');
+    }
+  };
+
+  // Create new story in Cloud Firestore
+  const handleAddStory = async (content: string, gradientClass: string, image?: string, video?: string, location?: string) => {
+    const newStoryData = {
+      author: preferences.username || "Yıldızlı",
+      authorAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username || "Yildizli")}&background=EAAA00&color=003057`,
+      content: content.trim(),
+      gradientClass,
+      image: image || null,
+      video: video || null,
+      location: location || null,
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      await addDoc(collection(db, 'stories'), newStoryData);
+    } catch (e) {
+      handleFirestoreError(e, OperationType.CREATE, 'stories');
     }
   };
 
@@ -578,6 +670,7 @@ export default function App() {
             <Feed 
               posts={posts}
               preferences={preferences}
+              stories={rawStories}
               onLikePost={handleLikePost}
               onAddPost={handleAddPost}
               onAddComment={handleAddComment}
@@ -586,6 +679,7 @@ export default function App() {
               onToggleSavePost={handleToggleSavePost}
               showOnlySaved={showOnlySaved}
               onClearSavedFilter={() => setShowOnlySaved(false)}
+              onAddStory={handleAddStory}
             />
           </main>
 

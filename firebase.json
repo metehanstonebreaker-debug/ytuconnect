@@ -1,0 +1,6 @@
+{
+  "firestore": {
+    "database": "ai-studio-yldzconnect-bbc6f1a6-1069-4aa8-9f8b-d9c26d7cac84",
+    "rules": "firestore.rules"
+  }
+}

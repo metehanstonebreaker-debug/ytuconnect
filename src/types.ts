@@ -54,3 +54,16 @@ export interface Club {
   logo: string;
   description: string;
 }
+
+export interface Story {
+  id: string;
+  author: string;
+  authorAvatar: string;
+  content: string;
+  createdAt: string;
+  gradientClass?: string;
+  image?: string;
+  video?: string;
+  location?: string;
+}
+
