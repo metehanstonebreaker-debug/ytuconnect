@@ -606,8 +606,8 @@ export default function Feed({
         <form onSubmit={handleSharePostSubmit} className="space-y-3.5">
           <div className="flex gap-3 items-start">
             <img 
-              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`} 
-              className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700"
+              src={preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`} 
+              className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 object-cover"
               alt="Avatar"
             />
             <div className="flex-1 space-y-2">
@@ -1155,8 +1155,8 @@ export default function Feed({
 
                   <div className="flex items-center gap-2 z-10">
                     <img
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`}
-                      className="w-8 h-8 rounded-full border border-white/20"
+                      src={preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`}
+                      className="w-8 h-8 rounded-full border border-white/20 object-cover"
                       alt={preferences.username}
                     />
                     <div>

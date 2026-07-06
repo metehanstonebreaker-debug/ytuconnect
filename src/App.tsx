@@ -323,7 +323,7 @@ export default function App() {
   const handleAddPost = async (content: string, field: string, image?: string, location?: string) => {
     const newPostData = {
       author: preferences.username,
-      authorAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`,
+      authorAvatar: preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`,
       time: "Şimdi",
       content,
       likes: 0,
@@ -345,7 +345,7 @@ export default function App() {
   const handleAddStory = async (content: string, gradientClass: string, image?: string, video?: string, location?: string, textX?: number, textY?: number) => {
     const newStoryData = {
       author: preferences.username || "Yıldızlı",
-      authorAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username || "Yildizli")}&background=EAAA00&color=003057`,
+      authorAvatar: preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username || "Yildizli")}&background=EAAA00&color=003057`,
       content: content.trim(),
       gradientClass,
       image: image || null,
@@ -373,7 +373,7 @@ export default function App() {
     const newComment = {
       id: Math.random().toString(36).substring(2, 9),
       author: preferences.username,
-      authorAvatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`,
+      authorAvatar: preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`,
       content: commentContent.trim(),
       createdAt: new Date().toISOString()
     };
@@ -520,8 +520,8 @@ export default function App() {
             {/* Profile badge */}
             <div className="flex items-center gap-2 pl-3 border-l border-slate-200 dark:border-slate-800">
               <img 
-                src={`https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`} 
-                className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700"
+                src={preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`} 
+                className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 object-cover"
                 alt={preferences.username}
               />
               <div className="hidden lg:block text-left">

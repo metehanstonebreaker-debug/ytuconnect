@@ -11,6 +11,7 @@ export interface UserPreferences {
   interestedClubs: string[];
   excludedCategories: string[]; // Items the user filters out (does not want to see)
   isOnboarded: boolean;
+  avatar?: string;
 }
 
 export interface Comment {
