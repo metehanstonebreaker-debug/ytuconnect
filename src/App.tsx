@@ -3,17 +3,20 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Onboarding from './components/Onboarding';
 import SettingsPanel from './components/SettingsPanel';
 import Feed from './components/Feed';
+import DiscoverUsers from './components/DiscoverUsers';
 import WeatherWidget from './components/WeatherWidget';
 import ExamWidget from './components/ExamWidget';
-import Chatbot from './components/Chatbot';
+import ChatWidget from './components/ChatWidget';
 import GpaCalculator from './components/GpaCalculator';
-import { UserPreferences, Post, Story } from './types';
+import UserProfileModal from './components/UserProfileModal';
+import { applyThemeColor } from './lib/theme';
+import { UserPreferences, Post, Story, RegisteredUser } from './types';
 import { MOCK_POSTS, DEPARTMENTS } from './mockData';
-import { collection, onSnapshot, query, orderBy, addDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, addDoc, doc, updateDoc, setDoc, deleteDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from './firebase';
 import { 
   Bell, 
@@ -62,6 +65,7 @@ export default function App() {
       interestedFields: [],
       interestedClubs: [],
       excludedCategories: [],
+      themeColor: 'yellow',
       isOnboarded: false
     };
   });
@@ -71,6 +75,55 @@ export default function App() {
 
   // 4. Raw stories from Firestore cloud database
   const [rawStories, setRawStories] = useState<Story[]>([]);
+
+  // 5. Registered users from Firestore cloud database
+  const [registeredUsers, setRegisteredUsers] = useState<RegisteredUser[]>([]);
+  const [currentTab, setCurrentTab] = useState<'feed' | 'discover'>('feed');
+
+  // Sync registered users from Firestore in real-time
+  useEffect(() => {
+    const usersRef = collection(db, 'registered_users');
+    const q = query(usersRef, orderBy('createdAt', 'desc'));
+
+    const mockIds = ["20011043", "19022011", "21041005"];
+
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const fetchedUsers: RegisteredUser[] = [];
+      snapshot.forEach((snapshotDoc) => {
+        const data = snapshotDoc.data();
+        const id = snapshotDoc.id;
+
+        // If it is a mock user, delete it from the cloud database to clean up
+        if (mockIds.includes(id)) {
+          try {
+            deleteDoc(doc(db, 'registered_users', id));
+          } catch (err) {
+            console.error("Error deleting mock user:", err);
+          }
+          return;
+        }
+
+        fetchedUsers.push({
+          studentId: id,
+          username: data.username,
+          department: data.department || "Genel",
+          interestedFields: data.interestedFields || [],
+          interestedClubs: data.interestedClubs || [],
+          avatar: data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=f59e0b&color=003057`,
+          bio: data.bio || "Henüz bir biyografi eklenmemiş.",
+          createdAt: data.createdAt || new Date().toISOString(),
+          friends: data.friends || [],
+          friendRequests: data.friendRequests || [],
+          hasUnreadMessages: data.hasUnreadMessages || false
+        });
+      });
+      setRegisteredUsers(fetchedUsers);
+    }, (error) => {
+      console.error("Firestore Error fetching registered users: ", error);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // Local record of which posts have been liked by the user to calculate likedByMe on-the-fly
   const [likedPostIds, setLikedPostIds] = useState<string[]>(() => {
@@ -88,6 +141,21 @@ export default function App() {
     ...p,
     likedByMe: likedPostIds.includes(p.id)
   }));
+
+  // Force re-evaluation of relative times and story expiration every 30 seconds
+  const [timeTicker, setTimeTicker] = useState<number>(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeTicker(prev => prev + 1);
+    }, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Filter stories dynamically to ensure they vanish precisely after 24 hours
+  const activeStories = rawStories.filter(story => {
+    const createdAtTime = new Date(story.createdAt).getTime();
+    return !isNaN(createdAtTime) && (Date.now() - createdAtTime <= 24 * 3600 * 1000);
+  });
 
   // Sync liked posts to localStorage
   useEffect(() => {
@@ -143,7 +211,8 @@ export default function App() {
             isPinned: data.isPinned || false,
             image: data.image || undefined,
             location: data.location || undefined,
-            comments: data.comments || []
+            comments: data.comments || [],
+            createdAt: data.createdAt || new Date().toISOString()
           });
         });
         setRawPosts(fetchedList);
@@ -166,21 +235,21 @@ export default function App() {
         const initialStories = [
           {
             author: "SKY LAB Kulübü",
-            authorAvatar: "https://ui-avatars.com/api/?name=SKY+LAB&background=003057&color=EAAA00",
+            authorAvatar: "https://ui-avatars.com/api/?name=SKY+LAB&background=003057&color=f59e0b",
             content: "Yarın saat 14:00'te online Python workshopu var, kaçırmayın! 💻",
             gradientClass: "from-blue-600 via-indigo-600 to-purple-600",
             createdAt: new Date().toISOString()
           },
           {
             author: "Müzik Kulübü",
-            authorAvatar: "https://ui-avatars.com/api/?name=Muzik&background=EAAA00&color=003057",
+            authorAvatar: "https://ui-avatars.com/api/?name=Muzik&background=f59e0b&color=003057",
             content: "Beşiktaş Kampüsü orta bahçede akustik dinletimiz başladı! 🎸✨",
-            gradientClass: "from-amber-500 via-rose-500 to-indigo-500",
+            gradientClass: "from-brand-600 via-rose-500 to-indigo-500",
             createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString()
           },
           {
             author: "IEEE YTÜ",
-            authorAvatar: "https://ui-avatars.com/api/?name=IEEE&background=003057&color=EAAA00",
+            authorAvatar: "https://ui-avatars.com/api/?name=IEEE&background=003057&color=f59e0b",
             content: "Sektör Günleri etkinliği için kayıtlar açıldı! Link bio'da. ⚡🚀",
             gradientClass: "from-teal-500 to-emerald-500",
             createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString()
@@ -229,12 +298,85 @@ export default function App() {
   // UI state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [notifications, setNotifications] = useState<string[]>([
-    "Yemekhane kart dolum sistemindeki arıza giderilmiştir.",
-    "SKY LAB Güz Kampı başvuruları açıldı!",
-    "Bölümler Arası Halı Saha Turnuvası kayıtları devam ediyor."
-  ]);
+  const [notifications, setNotifications] = useState<string[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // Derived friend requests
+  const currentUser = registeredUsers.find(u => u.studentId === preferences.studentId);
+  const myFriendRequests = currentUser?.friendRequests || [];
+
+  const prevUnreadRef = useRef(currentUser?.hasUnreadMessages);
+  useEffect(() => {
+    const hasUnread = currentUser?.hasUnreadMessages;
+    if (hasUnread && !prevUnreadRef.current) {
+      setNotifications(prev => {
+        if (!prev.includes("Yeni mesajınız var!")) {
+          return ["Yeni mesajınız var!", ...prev];
+        }
+        return prev;
+      });
+      try {
+        const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
+        audio.volume = 0.2; audio.play().catch(() => {});
+      } catch (err) {}
+    }
+    prevUnreadRef.current = hasUnread;
+  }, [currentUser?.hasUnreadMessages]);
+
+  const handleAcceptFriendRequest = async (requesterId: string) => {
+    try {
+      const curUserRef = doc(db, 'registered_users', preferences.studentId);
+      const targetUserRef = doc(db, 'registered_users', requesterId);
+      await updateDoc(curUserRef, { 
+        friends: arrayUnion(requesterId),
+        friendRequests: arrayRemove(requesterId)
+      });
+      await updateDoc(targetUserRef, { 
+        friends: arrayUnion(preferences.studentId)
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDeclineFriendRequest = async (requesterId: string) => {
+    try {
+      const curUserRef = doc(db, 'registered_users', preferences.studentId);
+      await updateDoc(curUserRef, { 
+        friendRequests: arrayRemove(requesterId)
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const [selectedUserProfile, setSelectedUserProfile] = useState<RegisteredUser | null>(null);
+  const [isUserProfileModalOpen, setIsUserProfileModalOpen] = useState<boolean>(false);
+
+  const handleViewProfile = (studentIdOrUsername: string, isStudentId: boolean) => {
+    let foundUser = registeredUsers.find(u => 
+      isStudentId 
+        ? u.studentId === studentIdOrUsername 
+        : u.username === studentIdOrUsername || u.studentId === studentIdOrUsername
+    );
+
+    if (!foundUser) {
+      const postWithAuthor = posts.find(p => p.author === studentIdOrUsername || p.authorStudentId === studentIdOrUsername);
+      foundUser = {
+        studentId: isStudentId ? studentIdOrUsername : (postWithAuthor?.authorStudentId || "Kampüs Sakini"),
+        username: !isStudentId ? studentIdOrUsername : (postWithAuthor?.author || studentIdOrUsername),
+        avatar: postWithAuthor?.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(studentIdOrUsername)}&background=f59e0b&color=003057`,
+        department: postWithAuthor?.department || "Yıldız Teknik Üniversitesi",
+        interestedFields: postWithAuthor?.field ? [postWithAuthor.field] : [],
+        interestedClubs: [],
+        bio: "Bu kullanıcının detaylı profil bilgileri henüz tanımlanmamış.",
+        createdAt: new Date().toISOString()
+      };
+    }
+
+    setSelectedUserProfile(foundUser);
+    setIsUserProfileModalOpen(true);
+  };
 
   // Apply dark mode theme class
   useEffect(() => {
@@ -246,15 +388,36 @@ export default function App() {
     localStorage.setItem('ytu_dark_mode', String(darkMode));
   }, [darkMode]);
 
+  // Apply theme color
+  useEffect(() => {
+    applyThemeColor(preferences.themeColor || 'yellow');
+  }, [preferences.themeColor]);
+
   // Sync preferences to localStorage
   const handleOnboardingComplete = (newPrefs: UserPreferences) => {
     setPreferences(newPrefs);
     localStorage.setItem('ytu_user_preferences', JSON.stringify(newPrefs));
   };
 
-  const handleSaveSettings = (updatedPrefs: UserPreferences) => {
+  const handleSaveSettings = async (updatedPrefs: UserPreferences) => {
     setPreferences(updatedPrefs);
     localStorage.setItem('ytu_user_preferences', JSON.stringify(updatedPrefs));
+    
+    if (updatedPrefs.studentId) {
+      try {
+        await setDoc(doc(db, 'registered_users', updatedPrefs.studentId), {
+          studentId: updatedPrefs.studentId,
+          username: updatedPrefs.username,
+          department: updatedPrefs.department,
+          interestedFields: updatedPrefs.interestedFields,
+          interestedClubs: updatedPrefs.interestedClubs,
+          avatar: updatedPrefs.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(updatedPrefs.username)}&background=f59e0b&color=003057`,
+          createdAt: new Date().toISOString()
+        }, { merge: true });
+      } catch (e) {
+        console.error("Error updating user settings in Firestore:", e);
+      }
+    }
   };
 
   const handleResetApp = () => {
@@ -267,6 +430,7 @@ export default function App() {
       interestedFields: [],
       interestedClubs: [],
       excludedCategories: [],
+      themeColor: 'yellow',
       isOnboarded: false
     });
     setIsSettingsOpen(false);
@@ -289,6 +453,32 @@ export default function App() {
       setLikedPostIds(prev => 
         isAlreadyLiked ? prev.filter(id => id !== postId) : [...prev, postId]
       );
+    } catch (e) {
+      handleFirestoreError(e, OperationType.UPDATE, `posts/${postId}`);
+    }
+  };
+
+  // Delete a post from Cloud Firestore
+  const handleDeletePost = async (postId: string) => {
+    try {
+      await deleteDoc(doc(db, 'posts', postId));
+    } catch (e) {
+      handleFirestoreError(e, OperationType.DELETE, `posts/${postId}`);
+    }
+  };
+
+  // Delete a specific comment from a post
+  const handleDeleteComment = async (postId: string, commentId: string) => {
+    const targetPost = rawPosts.find(p => p.id === postId);
+    if (!targetPost) return;
+
+    const postRef = doc(db, 'posts', postId);
+    const updatedComments = (targetPost.comments || []).filter(c => c.id !== commentId);
+
+    try {
+      await updateDoc(postRef, {
+        comments: updatedComments
+      });
     } catch (e) {
       handleFirestoreError(e, OperationType.UPDATE, `posts/${postId}`);
     }
@@ -323,7 +513,7 @@ export default function App() {
   const handleAddPost = async (content: string, field: string, image?: string, location?: string) => {
     const newPostData = {
       author: preferences.username,
-      authorAvatar: preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`,
+      authorAvatar: preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=f59e0b&color=003057`,
       time: "Şimdi",
       content,
       likes: 0,
@@ -331,7 +521,8 @@ export default function App() {
       department: preferences.department || null,
       image: image || null,
       location: location || null,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      authorStudentId: preferences.studentId
     };
 
     try {
@@ -345,7 +536,7 @@ export default function App() {
   const handleAddStory = async (content: string, gradientClass: string, image?: string, video?: string, location?: string, textX?: number, textY?: number) => {
     const newStoryData = {
       author: preferences.username || "Yıldızlı",
-      authorAvatar: preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username || "Yildizli")}&background=EAAA00&color=003057`,
+      authorAvatar: preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username || "Yildizli")}&background=f59e0b&color=003057`,
       content: content.trim(),
       gradientClass,
       image: image || null,
@@ -353,7 +544,8 @@ export default function App() {
       location: location || null,
       textX: textX !== undefined ? textX : 50,
       textY: textY !== undefined ? textY : 50,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      authorStudentId: preferences.studentId
     };
 
     try {
@@ -373,9 +565,10 @@ export default function App() {
     const newComment = {
       id: Math.random().toString(36).substring(2, 9),
       author: preferences.username,
-      authorAvatar: preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`,
+      authorAvatar: preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=f59e0b&color=003057`,
       content: commentContent.trim(),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      authorStudentId: preferences.studentId
     };
 
     const updatedComments = [...(targetPost.comments || []), newComment];
@@ -424,12 +617,12 @@ export default function App() {
           
           {/* Logo Brand */}
           <div className="flex items-center gap-3">
-            <div className="bg-slate-900 dark:bg-amber-400 p-2 rounded-xl text-amber-400 dark:text-slate-900 font-black shadow-inner flex items-center justify-center">
+            <div className="bg-slate-900 dark:bg-brand-500 p-2 rounded-xl text-brand-500 dark:text-slate-900 font-black shadow-inner flex items-center justify-center">
               <GraduationCap className="w-5 h-5" />
             </div>
             <div>
               <h1 className="text-lg font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5">
-                YILDIZ <span className="text-amber-600 dark:text-amber-400">CONNECT</span>
+                YILDIZ <span className="text-brand-700 dark:text-brand-500">CONNECT</span>
               </h1>
               <p className="hidden md:block text-[9px] font-extrabold text-slate-400 uppercase tracking-widest leading-none">
                 YTÜ DİJİTAL KAMPÜSÜ
@@ -454,22 +647,24 @@ export default function App() {
             {/* Dark Mode */}
             <button 
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+              className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-500 transition-colors"
               title={darkMode ? 'Aydınlık Mod' : 'Karanlık Mod'}
             >
-              {darkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
+              {darkMode ? <Sun className="w-5 h-5 text-brand-500" /> : <Moon className="w-5 h-5" />}
             </button>
 
             {/* Notifications */}
             <div className="relative">
               <button 
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 transition-colors"
+                className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-brand-700 dark:hover:text-brand-500 transition-colors"
               >
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-1 right-1 bg-rose-500 text-[9px] text-white font-extrabold rounded-full w-4 h-4 flex items-center justify-center animate-pulse">
-                  3
-                </span>
+                {(notifications.length + myFriendRequests.length) > 0 && (
+                  <span className="absolute top-1 right-1 bg-rose-500 text-[9px] text-white font-extrabold rounded-full w-4 h-4 flex items-center justify-center animate-pulse">
+                    {notifications.length + myFriendRequests.length}
+                  </span>
+                )}
               </button>
 
               {/* Notifications Dropdown */}
@@ -479,13 +674,39 @@ export default function App() {
                     <p className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Bildirimler</p>
                     <button 
                       onClick={() => setNotifications([])} 
-                      className="text-[10px] text-slate-400 hover:text-amber-600 dark:hover:text-amber-400"
+                      className="text-[10px] text-slate-400 hover:text-brand-700 dark:hover:text-brand-500 cursor-pointer"
                     >
                       Tümünü temizle
                     </button>
                   </div>
-                  <div className="space-y-2">
-                    {notifications.length === 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto custom-scrollbar">
+                    {myFriendRequests.map((reqId) => {
+                      const reqUser = registeredUsers.find(u => u.studentId === reqId);
+                      if (!reqUser) return null;
+                      return (
+                        <div key={`req-${reqId}`} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                          <div className="flex items-center gap-2 mb-2 cursor-pointer" onClick={() => handleViewProfile(reqId, true)}>
+                            <img src={reqUser.avatar} alt={reqUser.username} className="w-6 h-6 rounded-full object-cover" />
+                            <p className="text-xs text-slate-700 dark:text-slate-200"><span className="font-bold">@{reqUser.username}</span> sana arkadaşlık isteği gönderdi.</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleAcceptFriendRequest(reqId)}
+                              className="flex-1 py-1 bg-brand-500 hover:bg-brand-600 text-slate-950 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                            >
+                              Kabul Et
+                            </button>
+                            <button
+                              onClick={() => handleDeclineFriendRequest(reqId)}
+                              className="flex-1 py-1 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-[10px] font-bold rounded-lg transition-colors cursor-pointer"
+                            >
+                              Reddet
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {notifications.length === 0 && myFriendRequests.length === 0 ? (
                       <p className="text-xs text-slate-400 text-center py-4">Yeni bildirim bulunmuyor.</p>
                     ) : (
                       notifications.map((notif, idx) => (
@@ -502,7 +723,7 @@ export default function App() {
             {/* Settings button */}
             <button 
               onClick={() => setIsSettingsOpen(true)}
-              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 hover:bg-amber-400 hover:text-slate-950 dark:hover:bg-amber-400 dark:hover:text-slate-950 text-slate-600 dark:text-slate-300 transition-all flex items-center justify-center shadow-sm cursor-pointer"
+              className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200/50 dark:border-slate-700/50 hover:bg-brand-500 hover:text-slate-950 dark:hover:bg-brand-500 dark:hover:text-slate-950 text-slate-600 dark:text-slate-300 transition-all flex items-center justify-center shadow-sm cursor-pointer"
               title="Ayarlar"
             >
               <Settings className="w-5 h-5" />
@@ -518,14 +739,18 @@ export default function App() {
             </button>
 
             {/* Profile badge */}
-            <div className="flex items-center gap-2 pl-3 border-l border-slate-200 dark:border-slate-800">
+            <div 
+              onClick={() => handleViewProfile(preferences.studentId, true)}
+              className="flex items-center gap-2 pl-3 border-l border-slate-200 dark:border-slate-800 cursor-pointer hover:opacity-80 transition-opacity"
+              title="Profilinizi Görüntüleyin"
+            >
               <img 
-                src={preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`} 
-                className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 object-cover"
+                src={preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=f59e0b&color=003057`} 
+                className="w-8 h-8 rounded-full border border-slate-300 dark:border-slate-700 object-cover shadow-sm"
                 alt={preferences.username}
               />
               <div className="hidden lg:block text-left">
-                <p className="text-xs font-bold text-slate-800 dark:text-white">@{preferences.username}</p>
+                <p className="text-xs font-bold text-slate-800 dark:text-white hover:text-brand-700 dark:hover:text-brand-500 transition-colors">@{preferences.username}</p>
                 <p className="text-[9px] text-slate-400">{preferences.studentId}</p>
               </div>
             </div>
@@ -551,17 +776,21 @@ export default function App() {
             
             {/* Quick Profile Info */}
             <div className="bg-white dark:bg-gradient-to-br dark:from-slate-900 dark:via-slate-950 dark:to-blue-950 text-slate-800 dark:text-white rounded-2xl p-5 shadow-sm dark:shadow-lg border border-slate-200/60 dark:border-slate-800/60 relative overflow-hidden">
-              <div className="absolute right-[-10%] top-[-10%] w-24 h-24 bg-amber-400/5 rounded-full blur-xl" />
+              <div className="absolute right-[-10%] top-[-10%] w-24 h-24 bg-brand-500/5 rounded-full blur-xl" />
               
-              <div className="flex items-center gap-3.5 pb-4 border-b border-slate-100 dark:border-white/10">
+              <div 
+                onClick={() => handleViewProfile(preferences.studentId, true)}
+                className="flex items-center gap-3.5 pb-4 border-b border-slate-100 dark:border-white/10 cursor-pointer hover:opacity-85 transition-opacity"
+                title="Profilinizi Görüntüleyin"
+              >
                 <img 
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`} 
-                  className="w-12 h-12 rounded-2xl border-2 border-amber-500 dark:border-amber-400 shadow-md"
+                  src={preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=f59e0b&color=003057`} 
+                  className="w-12 h-12 rounded-2xl border-2 border-brand-600 dark:border-brand-500 shadow-md object-cover"
                   alt="Student Avatar"
                 />
                 <div>
-                  <h3 className="font-extrabold text-slate-900 dark:text-white text-sm">@{preferences.username}</h3>
-                  <span className="text-[10px] text-amber-700 dark:text-amber-400 font-bold bg-amber-50 dark:bg-amber-400/10 border border-amber-200/50 dark:border-amber-400/20 px-2 py-0.5 rounded-md mt-1 inline-block">
+                  <h3 className="font-extrabold text-slate-900 dark:text-white text-sm hover:text-brand-700 dark:hover:text-brand-500 transition-colors">@{preferences.username}</h3>
+                  <span className="text-[10px] text-brand-800 dark:text-brand-500 font-bold bg-brand-50 dark:bg-brand-500/10 border border-brand-200/50 dark:border-brand-500/20 px-2 py-0.5 rounded-md mt-1 inline-block">
                     {preferences.department.split(' ')[0]}
                   </span>
                 </div>
@@ -597,10 +826,10 @@ export default function App() {
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-200/60 dark:border-slate-800/80">
               <nav className="space-y-1">
                 <button 
-                  onClick={() => setShowOnlySaved(false)}
+                  onClick={() => { setCurrentTab('feed'); setShowOnlySaved(false); }}
                   className={`w-full flex items-center justify-between px-3.5 py-3 text-left rounded-xl font-bold text-xs transition cursor-pointer ${
-                    !showOnlySaved 
-                      ? 'text-amber-600 dark:text-amber-400 bg-amber-500/5 border border-amber-400/10'
+                    currentTab === 'feed' && !showOnlySaved
+                      ? 'text-brand-700 dark:text-brand-500 bg-brand-500/5 border border-brand-500/10'
                       : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white border border-transparent'
                   }`}
                 >
@@ -612,32 +841,25 @@ export default function App() {
                 </button>
 
                 <button 
-                  onClick={() => alert("Fakülte haberleri panosu yakında aktif edilecektir.")}
-                  className="w-full flex items-center justify-between px-3.5 py-3 text-left rounded-xl font-semibold text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white transition border border-transparent"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <BookOpen className="w-4 h-4" />
-                    Akademik Panolar
-                  </span>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-                </button>
-
-                <button 
-                  onClick={() => alert("Kulüp portalı yakında aktif edilecektir.")}
-                  className="w-full flex items-center justify-between px-3.5 py-3 text-left rounded-xl font-semibold text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white transition border border-transparent"
+                  onClick={() => { setCurrentTab('discover'); setShowOnlySaved(false); }}
+                  className={`w-full flex items-center justify-between px-3.5 py-3 text-left rounded-xl font-bold text-xs transition cursor-pointer ${
+                    currentTab === 'discover'
+                      ? 'text-brand-700 dark:text-brand-500 bg-brand-500/5 border border-brand-500/10 font-bold'
+                      : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white border border-transparent'
+                  }`}
                 >
                   <span className="flex items-center gap-2.5">
                     <Users className="w-4 h-4" />
-                    Kulüp Yönetimi
+                    Kampüstekiler (Profil Keşfet)
                   </span>
-                  <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+                  <ChevronRight className="w-3.5 h-3.5" />
                 </button>
 
                 <button 
-                  onClick={() => setShowOnlySaved(true)}
+                  onClick={() => { setCurrentTab('feed'); setShowOnlySaved(true); }}
                   className={`w-full flex items-center justify-between px-3.5 py-3 text-left rounded-xl font-semibold text-xs transition cursor-pointer ${
-                    showOnlySaved 
-                      ? 'text-amber-600 dark:text-amber-400 bg-amber-500/5 border border-amber-400/10 font-bold'
+                    currentTab === 'feed' && showOnlySaved 
+                      ? 'text-brand-700 dark:text-brand-500 bg-brand-500/5 border border-brand-500/10 font-bold'
                       : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white border border-transparent'
                   }`}
                 >
@@ -647,7 +869,7 @@ export default function App() {
                   </span>
                   <div className="flex items-center gap-1.5">
                     {savedPostIds.length > 0 && (
-                      <span className="bg-amber-400 text-slate-900 font-extrabold text-[9px] px-1.5 py-0.5 rounded-full">
+                      <span className="bg-brand-500 text-slate-900 font-extrabold text-[9px] px-1.5 py-0.5 rounded-full">
                         {savedPostIds.length}
                       </span>
                     )}
@@ -659,32 +881,41 @@ export default function App() {
 
             {/* Quick Info Box */}
             <div className="bg-gradient-to-br from-indigo-50/70 to-slate-50/70 dark:from-indigo-950 dark:to-slate-900 text-slate-800 dark:text-white rounded-2xl p-4 shadow-sm border border-indigo-100 dark:border-indigo-950">
-              <h4 className="text-xs font-black text-indigo-600 dark:text-amber-400 flex items-center gap-1.5 mb-2">
-                <Compass className="w-4 h-4 text-indigo-600 dark:text-amber-400" />
+              <h4 className="text-xs font-black text-brand-500 flex items-center gap-1.5 mb-2">
+                <Compass className="w-4 h-4 text-brand-500" />
                 Biliyor Muydunuz?
               </h4>
               <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
-                Yıldız Connect ile kampüs akışınızı tamamen filtreleyebilirsiniz. İstemediğiniz kulüp, vize/bütünleme sınavları, veya yemekhane haberlerini <strong className="font-bold text-indigo-600 dark:text-amber-400">Ayarlar</strong> kısmından engelleyerek akışınızı sadeleştirebilirsiniz.
+                Yıldız Connect ile kampüs akışınızı tamamen filtreleyebilirsiniz. İstemediğiniz kulüp, vize/bütünleme sınavları, veya yemekhane haberlerini <strong className="font-bold text-brand-500">Ayarlar</strong> kısmından engelleyerek akışınızı sadeleştirebilirsiniz.
               </p>
             </div>
           </aside>
 
           {/* MIDDLE AREA: MAIN FEED CONTENT (6 Columns on Large Screen) */}
           <main className="col-span-1 lg:col-span-6 space-y-6">
-            <Feed 
-              posts={posts}
-              preferences={preferences}
-              stories={rawStories}
-              onLikePost={handleLikePost}
-              onAddPost={handleAddPost}
-              onAddComment={handleAddComment}
-              onRemoveExclude={handleRemoveExclude}
-              savedPostIds={savedPostIds}
-              onToggleSavePost={handleToggleSavePost}
-              showOnlySaved={showOnlySaved}
-              onClearSavedFilter={() => setShowOnlySaved(false)}
-              onAddStory={handleAddStory}
-            />
+            {currentTab === 'feed' ? (
+              <Feed 
+                posts={posts}
+                preferences={preferences}
+                stories={activeStories}
+                onLikePost={handleLikePost}
+                onAddPost={handleAddPost}
+                onAddComment={handleAddComment}
+                onRemoveExclude={handleRemoveExclude}
+                savedPostIds={savedPostIds}
+                onToggleSavePost={handleToggleSavePost}
+                showOnlySaved={showOnlySaved}
+                onClearSavedFilter={() => setShowOnlySaved(false)}
+                onAddStory={handleAddStory}
+                onViewProfile={handleViewProfile}
+              />
+            ) : (
+              <DiscoverUsers 
+                users={registeredUsers}
+                currentUserStudentId={preferences.studentId}
+                onViewProfile={handleViewProfile}
+              />
+            )}
           </main>
 
           {/* RIGHT SIDEBAR: CAMPUS WEATHER & EXAM SCHEDULE (3 Columns on Large Screen) */}
@@ -706,21 +937,21 @@ export default function App() {
             {/* Fast Stats / Trending Topics */}
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800/80">
               <h3 className="font-bold text-xs text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5 mb-3">
-                <TrendingUp className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <TrendingUp className="w-4 h-4 text-brand-500" />
                 Kampüste Bugün Popüler
               </h3>
               <div className="space-y-3 text-xs">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600 dark:text-slate-400 font-medium">#yildiz_hack_26</span>
-                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/5 px-2 py-0.5 rounded">134 paylaşım</span>
+                  <span className="text-[10px] font-bold text-brand-500 bg-brand-500/5 px-2 py-0.5 rounded">134 paylaşım</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600 dark:text-slate-400 font-medium">#davutpasa_ring_sirasi</span>
-                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/5 px-2 py-0.5 rounded">98 paylaşım</span>
+                  <span className="text-[10px] font-bold text-brand-500 bg-brand-500/5 px-2 py-0.5 rounded">98 paylaşım</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-slate-600 dark:text-slate-400 font-medium">#teknopark_staj</span>
-                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/5 px-2 py-0.5 rounded">75 paylaşım</span>
+                  <span className="text-[10px] font-bold text-brand-500 bg-brand-500/5 px-2 py-0.5 rounded">75 paylaşım</span>
                 </div>
               </div>
             </div>
@@ -740,20 +971,26 @@ export default function App() {
           </button>
 
           <div className="text-center">
-            <h2 className="text-2xl font-black text-amber-400">YILDIZ CONNECT</h2>
+            <h2 className="text-2xl font-black text-brand-500">YILDIZ CONNECT</h2>
             <p className="text-xs text-slate-400 mt-1">@{preferences.username} | {preferences.department}</p>
           </div>
 
           <div className="w-full max-w-xs space-y-3 text-center">
             <button 
-              onClick={() => { setIsMobileMenuOpen(false); }} 
+              onClick={() => { setCurrentTab('feed'); setShowOnlySaved(false); setIsMobileMenuOpen(false); }} 
               className="w-full py-3 bg-slate-800/80 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
             >
-              <Home className="w-4 h-4" /> Ana Sayfa
+              <Home className="w-4 h-4" /> Ana Sayfa Akış
+            </button>
+            <button 
+              onClick={() => { setCurrentTab('discover'); setShowOnlySaved(false); setIsMobileMenuOpen(false); }} 
+              className="w-full py-3 bg-slate-800/80 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+            >
+              <Users className="w-4 h-4" /> Kampüstekiler (Profil Keşfet)
             </button>
             <button 
               onClick={() => { setIsMobileMenuOpen(false); setIsSettingsOpen(true); }} 
-              className="w-full py-3 bg-amber-400 text-slate-900 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
+              className="w-full py-3 bg-brand-500 text-slate-900 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
             >
               <Settings className="w-4 h-4" /> Ayarlar & Filtreler
             </button>
@@ -761,7 +998,7 @@ export default function App() {
               onClick={() => { setIsMobileMenuOpen(false); handleResetApp(); }} 
               className="w-full py-3 bg-rose-950/60 border border-rose-800 text-rose-400 rounded-xl font-bold text-sm flex items-center justify-center gap-2"
             >
-              <LogOut className="w-4 h-4" /> Çıkış Yap / Reset
+              <LogOut className="w-4 h-4" /> Çıkış Yap / Sıfırla
             </button>
           </div>
         </div>
@@ -778,43 +1015,58 @@ export default function App() {
       )}
 
       {/* 5. BOTTOM NAVIGATION BAR FOR MOBILE DEVICES */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 py-2.5 flex justify-between items-center z-40">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-4 py-2.5 flex justify-between items-center z-40 gap-1 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
         <button 
-          className={`flex flex-col items-center gap-1 transition cursor-pointer ${
-            !showOnlySaved 
-              ? 'text-amber-500 font-extrabold' 
-              : 'text-slate-400 dark:text-slate-500'
+          className={`flex flex-col items-center gap-1 transition cursor-pointer flex-1 ${
+            currentTab === 'feed' && !showOnlySaved 
+              ? 'text-brand-600 font-extrabold' 
+              : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
           }`}
-          onClick={() => { setShowOnlySaved(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          onClick={() => { setCurrentTab('feed'); setShowOnlySaved(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
         >
           <Home className="w-5 h-5" />
           <span className="text-[9px]">Akış</span>
         </button>
+
         <button 
-          className={`flex flex-col items-center gap-1 transition cursor-pointer relative ${
-            showOnlySaved 
-              ? 'text-amber-500 font-extrabold' 
-              : 'text-slate-400 dark:text-slate-500'
+          className={`flex flex-col items-center gap-1 transition cursor-pointer flex-1 ${
+            currentTab === 'discover' 
+              ? 'text-brand-600 font-extrabold' 
+              : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
           }`}
-          onClick={() => { setShowOnlySaved(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+          onClick={() => { setCurrentTab('discover'); setShowOnlySaved(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+        >
+          <Users className="w-5 h-5" />
+          <span className="text-[9px]">Keşfet</span>
+        </button>
+
+        <button 
+          className={`flex flex-col items-center gap-1 transition cursor-pointer relative flex-1 ${
+            currentTab === 'feed' && showOnlySaved 
+              ? 'text-brand-600 font-extrabold' 
+              : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+          }`}
+          onClick={() => { setCurrentTab('feed'); setShowOnlySaved(true); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
         >
           <Bookmark className="w-5 h-5" />
           {savedPostIds.length > 0 && (
-            <span className="absolute top-0 right-1.5 bg-amber-500 text-slate-950 font-black text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center border border-white dark:border-slate-900 scale-95">
+            <span className="absolute top-0 right-3 bg-brand-600 text-slate-950 font-black text-[8px] w-3.5 h-3.5 rounded-full flex items-center justify-center border border-white dark:border-slate-900 scale-95">
               {savedPostIds.length}
             </span>
           )}
           <span className="text-[9px]">Kayıtlılar</span>
         </button>
+
         <button 
-          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer flex-1"
           onClick={() => { setIsSettingsOpen(true); }}
         >
           <Settings className="w-5 h-5" />
           <span className="text-[9px] font-bold">Ayarlar</span>
         </button>
+
         <button 
-          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-rose-400 cursor-pointer flex-1"
           onClick={handleResetApp}
         >
           <LogOut className="w-5 h-5" />
@@ -823,7 +1075,23 @@ export default function App() {
       </div>
 
       {/* AI Powered Chatbot */}
-      <Chatbot preferences={preferences} />
+      <ChatWidget preferences={preferences} hasUnreadMessages={currentUser?.hasUnreadMessages || false} />
+
+      {/* User Profile Detail Modal */}
+      {isUserProfileModalOpen && selectedUserProfile && (
+        <UserProfileModal 
+          isOpen={isUserProfileModalOpen}
+          onClose={() => setIsUserProfileModalOpen(false)}
+          user={selectedUserProfile}
+          posts={posts}
+          currentUserStudentId={preferences.studentId}
+          onLikePost={handleLikePost}
+          onToggleSavePost={handleToggleSavePost}
+          savedPostIds={savedPostIds}
+          onDeletePost={handleDeletePost}
+          onDeleteComment={handleDeleteComment}
+        />
+      )}
 
     </div>
   );

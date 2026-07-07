@@ -167,7 +167,7 @@ export default function GpaCalculator() {
   const getGpaFeedback = (gpaVal: number) => {
     if (gpaVal >= 3.5) return { text: "Yüksek Şeref Öğrencisi! 🏆", color: "text-emerald-500" };
     if (gpaVal >= 3.0) return { text: "Şeref Öğrencisi! 🌟", color: "text-teal-500" };
-    if (gpaVal >= 2.0) return { text: "Başarılı Durumdasın 👍", color: "text-amber-600 dark:text-amber-400" };
+    if (gpaVal >= 2.0) return { text: "Başarılı Durumdasın 👍", color: "text-brand-700 dark:text-brand-500" };
     return { text: "Barajın Altında (Yükseltmen Gerek) ⚠️", color: "text-rose-500" };
   };
 
@@ -175,14 +175,14 @@ export default function GpaCalculator() {
   const cumFeedback = getGpaFeedback(cumulativeGpa);
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800/80 border-b-4 border-b-amber-500 transition duration-350 hover:shadow-md overflow-hidden" id="ytu_gpa_calculator">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800/80 border-b-4 border-b-brand-600 transition duration-350 hover:shadow-md overflow-hidden" id="ytu_gpa_calculator">
       {/* Header */}
       <button 
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full px-4 py-3.5 flex justify-between items-center text-left bg-slate-50/50 dark:bg-slate-950/20 hover:bg-slate-50 dark:hover:bg-slate-950/45 transition outline-none cursor-pointer"
       >
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-amber-400 text-slate-950 rounded-lg shadow-inner">
+          <div className="p-1.5 bg-brand-500 text-slate-950 rounded-lg shadow-inner">
             <Calculator className="w-4 h-4" />
           </div>
           <div>
@@ -191,7 +191,7 @@ export default function GpaCalculator() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs font-black text-amber-600 dark:text-amber-400 bg-amber-400/10 px-2 py-0.5 rounded-md">
+          <span className="text-xs font-black text-brand-700 dark:text-brand-500 bg-brand-500/10 px-2 py-0.5 rounded-md">
             {semesterResults.gpa.toFixed(2)}
           </span>
           {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
@@ -224,7 +224,7 @@ export default function GpaCalculator() {
                       type="text"
                       value={course.name}
                       onChange={(e) => handleCourseChange(course.id, 'name', e.target.value)}
-                      className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80 rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-white outline-none focus:border-amber-400 transition"
+                      className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80 rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-white outline-none focus:border-brand-500 transition"
                       placeholder="Ders Adı"
                     />
                   </div>
@@ -234,7 +234,7 @@ export default function GpaCalculator() {
                     <select 
                       value={course.grade}
                       onChange={(e) => handleCourseChange(course.id, 'grade', e.target.value)}
-                      className="w-full text-center bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80 rounded-lg px-1.5 py-1.5 text-xs text-slate-800 dark:text-white outline-none focus:border-amber-400 transition cursor-pointer font-bold"
+                      className="w-full text-center bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80 rounded-lg px-1.5 py-1.5 text-xs text-slate-800 dark:text-white outline-none focus:border-brand-500 transition cursor-pointer font-bold"
                     >
                       {Object.keys(GRADE_COEFFICIENTS).map(g => (
                         <option key={g} value={g}>{g}</option>
@@ -250,7 +250,7 @@ export default function GpaCalculator() {
                       max="30"
                       value={course.credits}
                       onChange={(e) => handleCourseChange(course.id, 'credits', e.target.value)}
-                      className="w-full text-center bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80 rounded-lg px-1 py-1.5 text-xs text-slate-800 dark:text-white outline-none focus:border-amber-400 transition font-bold"
+                      className="w-full text-center bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80 rounded-lg px-1 py-1.5 text-xs text-slate-800 dark:text-white outline-none focus:border-brand-500 transition font-bold"
                     />
                     <button 
                       onClick={() => handleRemoveCourse(course.id)}
@@ -270,7 +270,7 @@ export default function GpaCalculator() {
                 onClick={handleAddCourse}
                 className="flex-1 py-1.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer border border-transparent dark:border-slate-700/30"
               >
-                <Plus className="w-4 h-4 text-amber-500" />
+                <Plus className="w-4 h-4 text-brand-600" />
                 Ders Ekle
               </button>
               <button 
@@ -290,7 +290,7 @@ export default function GpaCalculator() {
               </div>
               <div className="flex justify-between items-center text-xs pb-1.5 border-b border-slate-200/50 dark:border-slate-800/60">
                 <span className="text-slate-500 dark:text-slate-400 font-semibold font-sans">Dönem Ortalama:</span>
-                <span className="font-black text-amber-600 dark:text-amber-400 text-sm bg-amber-500/5 px-2 py-0.5 rounded-md">
+                <span className="font-black text-brand-700 dark:text-brand-500 text-sm bg-brand-500/5 px-2 py-0.5 rounded-md">
                   {semesterResults.gpa.toFixed(2)}
                 </span>
               </div>
@@ -304,10 +304,10 @@ export default function GpaCalculator() {
               <button 
                 type="button"
                 onClick={() => setShowPrevGpaInput(!showPrevGpaInput)}
-                className="w-full flex items-center justify-between text-[11px] text-slate-500 hover:text-amber-600 dark:hover:text-amber-400 font-bold transition outline-none cursor-pointer"
+                className="w-full flex items-center justify-between text-[11px] text-slate-500 hover:text-brand-700 dark:hover:text-brand-500 font-bold transition outline-none cursor-pointer"
               >
                 <span className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                  <Sparkles className="w-3.5 h-3.5 text-brand-700 dark:text-brand-500" />
                   Önceki Dönemleri Dahil Et (Genel AGNO)
                 </span>
                 {showPrevGpaInput ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -332,7 +332,7 @@ export default function GpaCalculator() {
                           max="4"
                           value={prevGpa || ''}
                           onChange={(e) => setPrevGpa(parseFloat(e.target.value) || 0)}
-                          className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80 rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-white outline-none focus:border-amber-400 transition font-bold"
+                          className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80 rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-white outline-none focus:border-brand-500 transition font-bold"
                           placeholder="Örn: 2.85"
                         />
                       </div>
@@ -343,20 +343,20 @@ export default function GpaCalculator() {
                           min="0"
                           value={prevCredits || ''}
                           onChange={(e) => setPrevCredits(parseInt(e.target.value) || 0)}
-                          className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80 rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-white outline-none focus:border-amber-400 transition font-bold"
+                          className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200/60 dark:border-slate-800/80 rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-white outline-none focus:border-brand-500 transition font-bold"
                           placeholder="Örn: 60"
                         />
                       </div>
                     </div>
 
                     {/* Combined Result */}
-                    <div className="bg-amber-400/10 border border-amber-400/30 rounded-xl p-3 flex justify-between items-center">
+                    <div className="bg-brand-500/10 border border-brand-500/30 rounded-xl p-3 flex justify-between items-center">
                       <div className="text-left">
                         <p className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400 tracking-wider">Tahmini Genel AGNO</p>
                         <p className={`text-[10px] font-bold mt-1 ${cumFeedback.color}`}>{cumFeedback.text}</p>
                       </div>
                       <div className="text-right">
-                        <span className="text-base font-black text-amber-700 dark:text-amber-400 bg-amber-400/15 border border-amber-400/25 px-2.5 py-1 rounded-lg">
+                        <span className="text-base font-black text-brand-800 dark:text-brand-500 bg-brand-500/15 border border-brand-500/25 px-2.5 py-1 rounded-lg">
                           {cumulativeGpa.toFixed(2)}
                         </span>
                       </div>

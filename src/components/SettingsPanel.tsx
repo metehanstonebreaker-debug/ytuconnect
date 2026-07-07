@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { DEPARTMENTS, INTEREST_FIELDS, CLUBS } from '../mockData';
 import { UserPreferences } from '../types';
+import { applyThemeColor } from '../lib/theme';
 import { 
   X, 
   Save, 
@@ -70,14 +71,24 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
   const [excludedCategories, setExcludedCategories] = useState<string[]>(preferences.excludedCategories || []);
   const [customFilterInput, setCustomFilterInput] = useState('');
 
-  // Handle camera stream cleanup
+  // Theme selection state
+  const [themeColor, setThemeColor] = useState<string>(preferences.themeColor || 'yellow');
+
+  // Preview theme color immediately on selection
+  useEffect(() => {
+    applyThemeColor(themeColor);
+  }, [themeColor]);
+
+  // Handle camera stream cleanup and theme reset on cancel
   useEffect(() => {
     return () => {
       if (cameraStream) {
         cameraStream.getTracks().forEach(track => track.stop());
       }
+      // Revert to saved theme if not saved
+      applyThemeColor(preferences.themeColor || 'yellow');
     };
-  }, [cameraStream]);
+  }, [cameraStream, preferences.themeColor]);
 
   // Methods for starting and stopping webcam
   const startCamera = async () => {
@@ -163,12 +174,12 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
       if (type === 'engineering') {
         ctx.fillStyle = '#003057';
         ctx.fillRect(0, 0, 200, 200);
-        ctx.strokeStyle = '#EAAA00';
+        ctx.strokeStyle = '#f59e0b';
         ctx.lineWidth = 10;
         ctx.beginPath();
         ctx.arc(100, 100, 45, 0, Math.PI * 2);
         ctx.stroke();
-        ctx.fillStyle = '#EAAA00';
+        ctx.fillStyle = '#f59e0b';
         ctx.beginPath();
         ctx.arc(100, 100, 15, 0, Math.PI * 2);
         ctx.fill();
@@ -322,7 +333,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
 
         // Draw overlay frame
         if (frame === 'border') {
-          ctx.strokeStyle = '#EAAA00';
+          ctx.strokeStyle = '#f59e0b';
           ctx.lineWidth = 14;
           ctx.beginPath();
           ctx.arc(150, 150, 143, 0, Math.PI * 2);
@@ -344,7 +355,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
           ctx.arc(150, 150, 139, 0, Math.PI * 2);
           ctx.stroke();
 
-          ctx.strokeStyle = '#EAAA00';
+          ctx.strokeStyle = '#f59e0b';
           ctx.lineWidth = 4;
           ctx.beginPath();
           ctx.arc(150, 150, 148, 0, Math.PI * 2);
@@ -383,7 +394,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
           ctx.closePath();
           ctx.fill();
 
-          ctx.strokeStyle = '#EAAA00';
+          ctx.strokeStyle = '#f59e0b';
           ctx.lineWidth = 2.5;
           ctx.beginPath();
           ctx.moveTo(0, 0);
@@ -393,7 +404,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
           
           ctx.restore();
         } else if (sticker === 'sparkle') {
-          ctx.fillStyle = '#EAAA00';
+          ctx.fillStyle = '#f59e0b';
           const drawStar = (x: number, y: number, r: number) => {
             ctx.beginPath();
             ctx.moveTo(x, y - r);
@@ -429,6 +440,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
       interestedClubs: selectedClubs,
       excludedCategories,
       avatar, // Save custom photo base64
+      themeColor, // Save theme color
       isOnboarded: true
     });
     onClose();
@@ -493,8 +505,8 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
         {/* Header */}
         <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-white/80 dark:bg-slate-900/50 sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <div className="bg-amber-400/10 p-2 rounded-xl border border-amber-400/20">
-              <Sliders className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            <div className="bg-brand-500/10 p-2 rounded-xl border border-brand-500/20">
+              <Sliders className="w-5 h-5 text-brand-700 dark:text-brand-500" />
             </div>
             <div>
               <h2 className="font-bold text-slate-900 dark:text-white text-lg">Hesap ve İçerik Ayarları</h2>
@@ -514,7 +526,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
           
           {/* Section 1: Kişisel Bilgiler */}
           <div className="space-y-4">
-            <h3 className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-2">
+            <h3 className="text-xs font-bold text-brand-700 dark:text-brand-500 uppercase tracking-widest flex items-center gap-2">
               <User className="w-4 h-4" />
               1. Kişisel Profil Bilgileri
             </h3>
@@ -535,14 +547,14 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                   <div className="relative w-40 h-40 rounded-full overflow-hidden border-4 border-slate-200 dark:border-slate-800 shadow-lg mx-auto bg-slate-900 flex items-center justify-center">
                     {/* Frame overlay */}
                     {frame === 'border' && (
-                      <div className="absolute inset-0 rounded-full border-[6px] border-[#EAAA00] z-20 pointer-events-none" />
+                      <div className="absolute inset-0 rounded-full border-[6px] border-[#f59e0b] z-20 pointer-events-none" />
                     )}
                     {frame === 'grad' && (
                       <div className="absolute inset-0 rounded-full border-[6px] border-transparent bg-gradient-to-tr from-rose-500 via-yellow-500 to-blue-500 z-20 pointer-events-none" style={{ WebkitMask: 'linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)', WebkitMaskComposite: 'xor', maskComposite: 'exclude' }} />
                     )}
                     {frame === 'brand' && (
                       <div className="absolute inset-0 rounded-full border-[10px] border-[#003057] z-20 pointer-events-none flex items-center justify-center">
-                        <div className="absolute inset-0 rounded-full border-2 border-[#EAAA00]" />
+                        <div className="absolute inset-0 rounded-full border-2 border-[#f59e0b]" />
                         <span className="absolute text-[5px] text-white font-black tracking-widest text-center uppercase top-1">YTÜ</span>
                         <span className="absolute text-[5px] text-white font-black tracking-widest text-center uppercase bottom-1">1911</span>
                       </div>
@@ -550,7 +562,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
 
                     {/* Sticker overlay */}
                     {sticker === 'gradcap' && (
-                      <div className="absolute bottom-2 right-2 bg-slate-950 text-white rounded-lg p-1 text-xs font-bold border border-[#EAAA00] z-30 pointer-events-none shadow-md">
+                      <div className="absolute bottom-2 right-2 bg-slate-950 text-white rounded-lg p-1 text-xs font-bold border border-[#f59e0b] z-30 pointer-events-none shadow-md">
                         🎓
                       </div>
                     )}
@@ -592,7 +604,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                         step="0.1" 
                         value={zoom} 
                         onChange={(e) => setZoom(parseFloat(e.target.value))}
-                        className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                        className="w-full h-1.5 bg-slate-200 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-brand-600"
                       />
                     </div>
 
@@ -636,7 +648,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                             key={f.id}
                             type="button"
                             onClick={() => setFilter(f.id)}
-                            className={`py-1 rounded-md transition ${filter === f.id ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
+                            className={`py-1 rounded-md transition ${filter === f.id ? 'bg-brand-500 text-slate-950 font-black' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
                           >
                             {f.label}
                           </button>
@@ -660,7 +672,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                             key={fr.id}
                             type="button"
                             onClick={() => setFrame(fr.id)}
-                            className={`py-1 px-1 rounded-md transition truncate ${frame === fr.id ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
+                            className={`py-1 px-1 rounded-md transition truncate ${frame === fr.id ? 'bg-brand-500 text-slate-950 font-black' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
                           >
                             {fr.label}
                           </button>
@@ -683,7 +695,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                             key={st.id}
                             type="button"
                             onClick={() => setSticker(st.id)}
-                            className={`py-1 rounded-md transition ${sticker === st.id ? 'bg-amber-400 text-slate-950 font-black' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
+                            className={`py-1 rounded-md transition ${sticker === st.id ? 'bg-brand-500 text-slate-950 font-black' : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300'}`}
                           >
                             {st.label}
                           </button>
@@ -710,7 +722,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                       <button
                         type="button"
                         onClick={applyEdits}
-                        className="flex-1 py-2 bg-amber-400 hover:bg-amber-500 text-slate-900 text-xs font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-1 cursor-pointer"
+                        className="flex-1 py-2 bg-brand-500 hover:bg-brand-600 text-slate-900 text-xs font-extrabold rounded-xl shadow-md transition flex items-center justify-center gap-1 cursor-pointer"
                       >
                         <Check className="w-4 h-4" /> Değişiklikleri Uygula
                       </button>
@@ -725,7 +737,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                   <div className="space-y-2 text-center shrink-0">
                     <div className="relative group w-24 h-24 rounded-full overflow-hidden border-4 border-white dark:border-slate-800 shadow-md bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
                       <img 
-                        src={avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(username || "YTÜ")}&background=EAAA00&color=003057`} 
+                        src={avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(username || "YTÜ")}&background=f59e0b&color=003057`} 
                         className="w-full h-full object-cover rounded-full"
                         alt="Profil Avatarı"
                       />
@@ -762,7 +774,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                               setActiveEditorTab(tab.id as any);
                               stopCamera();
                             }}
-                            className={`flex-1 py-1 px-1 rounded-md text-[10px] font-extrabold flex items-center justify-center gap-1 transition ${activeEditorTab === tab.id ? 'bg-amber-400/10 text-amber-600 dark:text-amber-400 border border-amber-400/20' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                            className={`flex-1 py-1 px-1 rounded-md text-[10px] font-extrabold flex items-center justify-center gap-1 transition ${activeEditorTab === tab.id ? 'bg-brand-500/10 text-brand-700 dark:text-brand-500 border border-brand-500/20' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
                           >
                             <Icon className="w-3 h-3" />
                             <span>{tab.label}</span>
@@ -780,7 +792,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                             <span className="text-[10px] font-bold text-slate-400">İnisyal Rengi Seçin:</span>
                             <div className="flex gap-2">
                               {[
-                                { name: 'Golden', start: '#EAAA00', end: '#FF5722', text: '#FFFFFF' },
+                                { name: 'CHP Kırmızısı', start: '#f59e0b', end: '#FF5722', text: '#FFFFFF' },
                                 { name: 'Ocean', start: '#003057', end: '#1E88E5', text: '#FFFFFF' },
                                 { name: 'Forest', start: '#2E7D32', end: '#81C784', text: '#FFFFFF' },
                                 { name: 'Crimson', start: '#D84315', end: '#FF8A65', text: '#FFFFFF' },
@@ -839,7 +851,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                         <div className="space-y-2.5 animate-in fade-in-50 duration-150 text-center">
                           {cameraStream ? (
                             <div className="space-y-2">
-                              <div className="relative w-36 h-36 rounded-2xl overflow-hidden border-2 border-amber-400 mx-auto bg-black shadow-inner">
+                              <div className="relative w-36 h-36 rounded-2xl overflow-hidden border-2 border-brand-500 mx-auto bg-black shadow-inner">
                                 <video 
                                   ref={videoRef} 
                                   autoPlay 
@@ -859,7 +871,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                                 <button
                                   type="button"
                                   onClick={capturePhoto}
-                                  className="px-3 py-1 text-[10px] bg-amber-400 hover:bg-amber-500 text-slate-950 font-extrabold rounded-lg shadow-sm transition flex items-center gap-1 cursor-pointer"
+                                  className="px-3 py-1 text-[10px] bg-brand-500 hover:bg-brand-600 text-slate-950 font-extrabold rounded-lg shadow-sm transition flex items-center gap-1 cursor-pointer"
                                 >
                                   <Camera className="w-3 h-3" /> Fotoğrafı Yakala
                                 </button>
@@ -874,7 +886,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                                 <button
                                   type="button"
                                   onClick={startCamera}
-                                  className="py-1.5 px-3 bg-amber-400 hover:bg-amber-500 text-slate-950 text-xs font-extrabold rounded-lg transition flex items-center justify-center gap-1 cursor-pointer"
+                                  className="py-1.5 px-3 bg-brand-500 hover:bg-brand-600 text-slate-950 text-xs font-extrabold rounded-lg transition flex items-center justify-center gap-1 cursor-pointer"
                                 >
                                   <Camera className="w-3.5 h-3.5" /> Kamerayı Başlat
                                 </button>
@@ -899,7 +911,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                             onDragLeave={handleDragLeave}
                             onDrop={handleDrop}
                             onClick={() => fileInputRef.current?.click()}
-                            className={`p-4 border-2 border-dashed rounded-xl text-center transition cursor-pointer space-y-2 ${isDragging ? 'border-amber-400 bg-amber-400/5' : 'border-slate-200 dark:border-slate-800 hover:border-amber-400 dark:hover:border-amber-700/80 bg-slate-50 dark:bg-slate-950/20'}`}
+                            className={`p-4 border-2 border-dashed rounded-xl text-center transition cursor-pointer space-y-2 ${isDragging ? 'border-brand-500 bg-brand-500/5' : 'border-slate-200 dark:border-slate-800 hover:border-brand-500 dark:hover:border-brand-800/80 bg-slate-50 dark:bg-slate-950/20'}`}
                           >
                             <input 
                               type="file" 
@@ -931,7 +943,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                  className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
                 />
               </div>
 
@@ -942,7 +954,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                   maxLength={8}
                   value={studentId}
                   onChange={(e) => setStudentId(e.target.value.replace(/\D/g, ''))}
-                  className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                  className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-lg py-2 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
                 />
               </div>
             </div>
@@ -953,7 +965,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                 <select 
                   value={department}
                   onChange={(e) => setDepartment(e.target.value)}
-                  className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-amber-400 appearance-none cursor-pointer"
+                  className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 rounded-lg py-2.5 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-brand-500 appearance-none cursor-pointer"
                 >
                   {DEPARTMENTS.map(dept => (
                     <option key={dept} value={dept} className="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
@@ -970,7 +982,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
 
           {/* Section 2: İlgi Alanları ve Kulüpler */}
           <div className="space-y-4">
-            <h3 className="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-widest flex items-center gap-2">
+            <h3 className="text-xs font-bold text-brand-700 dark:text-brand-500 uppercase tracking-widest flex items-center gap-2">
               <Sliders className="w-4 h-4" />
               2. İlgi Alanları ve Takip Edilen Kulüpler
             </h3>
@@ -987,11 +999,11 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                       onClick={() => toggleField(field.id)}
                       className={`p-2.5 rounded-lg border text-left transition flex items-center gap-2 cursor-pointer ${
                         isSelected 
-                          ? 'bg-amber-400/10 border-amber-400 text-slate-900 dark:text-white font-medium' 
+                          ? 'bg-brand-500/10 border-brand-500 text-slate-900 dark:text-white font-medium' 
                           : 'bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
-                      <div className={`p-1.5 rounded ${isSelected ? 'bg-amber-400 text-slate-950' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
+                      <div className={`p-1.5 rounded ${isSelected ? 'bg-brand-500 text-slate-950' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
                         {isSelected ? <Check className="w-3.5 h-3.5 stroke-[3px]" /> : <span className="w-3.5 h-3.5 block bg-transparent" />}
                       </div>
                       <span className="text-xs">{field.label}</span>
@@ -1013,7 +1025,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
                       onClick={() => toggleClub(club.id)}
                       className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all flex items-center gap-1.5 cursor-pointer ${
                         isSelected 
-                          ? 'bg-amber-400 text-slate-950 border-amber-400 font-bold' 
+                          ? 'bg-brand-500 text-slate-950 border-brand-500 font-bold' 
                           : 'bg-slate-50 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-400 dark:hover:border-slate-600'
                       }`}
                     >
@@ -1120,6 +1132,48 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
               )}
             </div>
           </div>
+
+          {/* Section 4: Tema Seçimi */}
+          <div className="space-y-4 border-t border-slate-200 dark:border-slate-800/80 pt-6">
+            <h3 className="text-xs font-bold text-brand-500 uppercase tracking-widest flex items-center gap-2">
+              <Palette className="w-4 h-4 text-brand-500" />
+              4. Uygulama Tema Seçimi
+            </h3>
+            
+            <p className="text-slate-500 dark:text-slate-400 text-xs leading-relaxed">
+              Uygulamanın ana vurgu rengini kişiselleştirin. Seçtiğiniz tema rengi tüm arayüz butonlarında, bildirim rozetlerinde ve aktif sekmelerde uygulanacaktır.
+            </p>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+              {[
+                { id: 'yellow', label: 'Sarı', name: 'Sarı-Lacivert', colorClass: 'bg-amber-500' },
+                { id: 'red', label: 'Kırmızı', name: 'Kampüs Ateşi', colorClass: 'bg-red-500' },
+                { id: 'blue', label: 'Mavi', name: 'Derin Deniz', colorClass: 'bg-blue-500' },
+                { id: 'green', label: 'Yeşil', name: 'Doğa Dostu', colorClass: 'bg-emerald-500' },
+                { id: 'purple', label: 'Mor', name: 'Kozmik', colorClass: 'bg-purple-500' }
+              ].map((themeOpt) => {
+                const isSelected = themeColor === themeOpt.id;
+                return (
+                  <button
+                    key={themeOpt.id}
+                    type="button"
+                    onClick={() => setThemeColor(themeOpt.id)}
+                    className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all cursor-pointer ${
+                      isSelected 
+                        ? 'border-brand-500 bg-brand-500/5 shadow-sm ring-2 ring-brand-500/20' 
+                        : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900/40'
+                    }`}
+                  >
+                    <div className={`w-8 h-8 rounded-full ${themeOpt.colorClass} border border-white/20 flex items-center justify-center shadow-inner`}>
+                      {isSelected && <Check className="w-4 h-4 text-white stroke-[3px]" />}
+                    </div>
+                    <span className="text-[11px] font-bold mt-2 text-slate-800 dark:text-slate-200">{themeOpt.label}</span>
+                    <span className="text-[8px] text-slate-400 dark:text-slate-500 leading-none mt-0.5 text-center">{themeOpt.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Footer actions */}
@@ -1144,7 +1198,7 @@ export default function SettingsPanel({ preferences, onSave, onClose, onReset }:
             </button>
             <button
               onClick={handleSave}
-              className="px-4.5 py-2 bg-amber-400 hover:bg-amber-500 text-slate-950 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-amber-400/5 cursor-pointer"
+              className="px-4.5 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-brand-500/5 cursor-pointer"
             >
               <Save className="w-4 h-4" />
               Değişiklikleri Kaydet

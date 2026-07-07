@@ -223,7 +223,7 @@ export const MOCK_POSTS: Post[] = [
   {
     id: "p1",
     author: "SKY LAB Kulübü",
-    authorAvatar: "https://ui-avatars.com/api/?name=SKY+LAB&background=003057&color=EAAA00",
+    authorAvatar: "https://ui-avatars.com/api/?name=SKY+LAB&background=003057&color=f59e0b",
     time: "20 dakika önce",
     content: "🚀 Dev Hackathon Başlıyor! Bu sene 'Yıldız Hack' ile Davutpaşa Tarihi Hamam'da 48 saat aralıksız kod yazacağız. Birinciye büyük ödül! Hemen başvur, takımını kur veya bireysel gel. Tüm bölümlere açık!",
     likes: 134,
@@ -234,7 +234,7 @@ export const MOCK_POSTS: Post[] = [
   {
     id: "p2",
     author: "YTÜ Kariyer Planlama",
-    authorAvatar: "https://ui-avatars.com/api/?name=Kariyer&background=EAAA00&color=003057",
+    authorAvatar: "https://ui-avatars.com/api/?name=Kariyer&background=f59e0b&color=003057",
     time: "1 saat önce",
     content: "💼 Davutpaşa Teknopark'taki 12 farklı yazılım ve Ar-Ge firması, yaz dönemi için 'Yıldız Stajyer' programı kapsamında başvuruları açtı. Bilgisayar, Matematik Mühendisliği ve Endüstri Mühendisliği öğrencileri öncelikli olup, 3 ve 4. sınıflar başvurabilir.",
     likes: 89,

@@ -81,6 +81,53 @@
         }
       },
       "required": ["author", "content", "createdAt"]
+    },
+    "RegisteredUser": {
+      "title": "RegisteredUser",
+      "description": "Registered campus student",
+      "type": "object",
+      "properties": {
+        "studentId": {
+          "type": "string",
+          "description": "Unique 8-digit school student number"
+        },
+        "username": {
+          "type": "string",
+          "description": "User chosen nickname"
+        },
+        "password": {
+          "type": "string",
+          "description": "User login password"
+        },
+        "department": {
+          "type": "string",
+          "description": "School department of the student"
+        },
+        "interestedFields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of interested categories/fields"
+        },
+        "interestedClubs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of interested clubs"
+        },
+        "avatar": {
+          "type": "string",
+          "description": "Avatar image URL or Base64 string"
+        },
+        "bio": {
+          "type": "string",
+          "description": "User bio/about me section"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO timestamp of user registration"
+        }
+      },
+      "required": ["studentId", "username", "department", "interestedFields", "interestedClubs", "avatar", "createdAt"]
     }
   },
   "firestore": {
@@ -91,6 +138,10 @@
     "/stories/{storyId}": {
       "schema": "Story",
       "description": "Collection of temporary campus stories"
+    },
+    "/registered_users/{studentId}": {
+      "schema": "RegisteredUser",
+      "description": "Collection of registered campus users and student profiles"
     }
   }
 }

@@ -23,8 +23,244 @@ import {
   Bookmark,
   X,
   Smile,
-  Video
+  Video,
+  Globe,
+  ExternalLink,
+  Github,
+  Youtube,
+  GraduationCap,
+  Play
 } from 'lucide-react';
+
+export function parseAndRenderContent(content: string) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = content.split(urlRegex);
+  
+  if (parts.length === 1) {
+    return <span>{content}</span>;
+  }
+
+  return (
+    <>
+      {parts.map((part, index) => {
+        if (part.match(urlRegex)) {
+          return (
+            <a 
+              key={index} 
+              href={part} 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="text-brand-700 dark:text-brand-500 font-bold hover:underline inline-flex items-center gap-0.5"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {part} <ExternalLink className="w-3 h-3 inline" />
+            </a>
+          );
+        }
+        return <span key={index}>{part}</span>;
+      })}
+    </>
+  );
+}
+
+export function extractFirstUrl(content: string): string | null {
+  const urlRegex = /(https?:\/\/[^\s]+)/;
+  const match = content.match(urlRegex);
+  return match ? match[0] : null;
+}
+
+export function isImageUrl(url: string): boolean {
+  if (!url) return false;
+  try {
+    const parsedUrl = new URL(url);
+    const pathname = parsedUrl.pathname.toLowerCase();
+    return /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|heic)$/i.test(pathname) || 
+           parsedUrl.searchParams.get("format") === "jpg" || 
+           parsedUrl.searchParams.get("format") === "png" || 
+           parsedUrl.searchParams.get("format") === "webp" ||
+           url.includes("images.unsplash.com") ||
+           url.includes("picsum.photos") ||
+           url.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|heic)(\?|$)/) !== null;
+  } catch (e) {
+    return /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|heic)/i.test(url);
+  }
+}
+
+export function LinkPreview({ url }: { url: string }) {
+  let hostname = "";
+  try {
+    hostname = new URL(url).hostname;
+  } catch (e) {
+    hostname = url;
+  }
+
+  let title = "Web Sitesi Bağlantısı";
+  let icon = <Globe className="w-4 h-4 text-slate-400" />;
+  let badgeColor = "bg-white/90 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50 shadow-sm";
+  let badgeText = "Bağlantı";
+  let initialImageUrl = "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?auto=format&fit=crop&w=600&q=80"; // general tech
+  
+  let youtubeVideoId: string | null = null;
+  let isImage = false;
+  try {
+    const parsedUrl = new URL(url);
+    const pathname = parsedUrl.pathname.toLowerCase();
+    isImage = /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|heic)$/i.test(pathname) || 
+              parsedUrl.searchParams.get("format") === "jpg" || 
+              parsedUrl.searchParams.get("format") === "png" || 
+              parsedUrl.searchParams.get("format") === "webp" ||
+              url.includes("images.unsplash.com") ||
+              url.includes("picsum.photos") ||
+              url.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|heic)(\?|$)/) !== null;
+  } catch (e) {
+    isImage = /\.(jpg|jpeg|png|gif|webp|svg|bmp|tiff|heic)/i.test(url);
+  }
+
+  if (isImage) {
+    title = "Görsel Bağlantısı";
+    icon = <Image className="w-4 h-4 text-brand-600" />;
+    badgeColor = "bg-brand-600/95 text-white border border-brand-700 shadow-sm";
+    badgeText = "Görsel";
+    initialImageUrl = url;
+  } else if (hostname.includes("yildiz.edu.tr")) {
+    title = "Yıldız Teknik Üniversitesi";
+    icon = <GraduationCap className="w-4 h-4 text-brand-600" />;
+    badgeColor = "bg-brand-600/90 text-white border border-brand-700";
+    badgeText = "YTÜ Resmi";
+    initialImageUrl = "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=600&q=80"; // elegant college/campus photo
+  } else if (hostname.includes("github.com")) {
+    title = "GitHub Deposu";
+    icon = <Github className="w-4 h-4 text-slate-800 dark:text-white" />;
+    badgeColor = "bg-slate-900/90 text-white border border-slate-800/80";
+    badgeText = "GitHub";
+    initialImageUrl = "https://images.unsplash.com/photo-1618401471353-b98aedd07871?auto=format&fit=crop&w=600&q=80"; // Developer workspace/git
+  } else if (hostname.includes("youtube.com") || hostname.includes("youtu.be")) {
+    title = "YouTube Videosu";
+    icon = <Youtube className="w-4 h-4 text-rose-600" />;
+    badgeColor = "bg-rose-600/90 text-white border border-rose-700";
+    badgeText = "YouTube";
+    
+    // Extract YouTube video ID to fetch actual cover image
+    try {
+      const parsedUrl = new URL(url);
+      if (parsedUrl.hostname.includes("youtube.com")) {
+        if (parsedUrl.pathname.includes("/shorts/")) {
+          youtubeVideoId = parsedUrl.pathname.split("/shorts/")[1]?.split(/[?#]/)[0] || null;
+        } else {
+          youtubeVideoId = parsedUrl.searchParams.get("v");
+        }
+      } else if (parsedUrl.hostname.includes("youtu.be")) {
+        youtubeVideoId = parsedUrl.pathname.substring(1).split(/[?#]/)[0];
+      }
+    } catch (e) {
+      const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=|\/shorts\/)([^#\&\?]*).*/;
+      const match = url.match(regExp);
+      if (match && match[2] && match[2].length === 11) {
+        youtubeVideoId = match[2];
+      }
+    }
+
+    if (youtubeVideoId) {
+      // Use maxresdefault for ultra high resolution
+      initialImageUrl = `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg`;
+    } else {
+      initialImageUrl = "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=600&q=80";
+    }
+  } else if (hostname.includes("wikipedia.org")) {
+    title = "Vikipedi Ansiklopedi";
+    badgeColor = "bg-slate-100/90 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 border border-slate-200/50 dark:border-slate-700/50";
+    badgeText = "Vikipedi";
+    initialImageUrl = "https://images.unsplash.com/photo-1506880018603-83d5b814b5a6?auto=format&fit=crop&w=600&q=80"; // Library / Books
+  }
+
+  const [imgSrc, setImgSrc] = useState(initialImageUrl);
+
+  React.useEffect(() => {
+    setImgSrc(initialImageUrl);
+  }, [initialImageUrl]);
+
+  return (
+    <a 
+      href={url} 
+      target="_blank" 
+      rel="noopener noreferrer"
+      className="mt-3 block aspect-video w-full max-w-[550px] rounded-2xl overflow-hidden shadow-sm hover:shadow-lg border border-slate-200/40 dark:border-slate-800/70 transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] relative group text-left bg-slate-150 dark:bg-slate-950/80"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <img 
+        src={imgSrc} 
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+        alt={title}
+        referrerPolicy="no-referrer"
+        onError={() => {
+          if (youtubeVideoId && imgSrc !== `https://img.youtube.com/vi/${youtubeVideoId}/hqdefault.jpg`) {
+            setImgSrc(`https://img.youtube.com/vi/${youtubeVideoId}/hqdefault.jpg`);
+          }
+        }}
+      />
+      
+      {/* Absolute dark overlays for readability */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 opacity-85 z-2" />
+
+      {/* Floating badge inside image (top left) */}
+      <div className="absolute top-3 left-3 flex gap-1.5 items-center z-10">
+        <span className={`text-[10px] font-black px-2.5 py-1 rounded-xl uppercase tracking-wider shadow-md backdrop-blur-md flex items-center gap-1.5 ${badgeColor}`}>
+          {icon}
+          <span>{badgeText}</span>
+        </span>
+      </div>
+
+      {/* Floating hostname inside image right-aligned (bottom right) */}
+      <div className="absolute bottom-3 right-3 bg-black/60 text-white border border-white/10 px-2.5 py-0.5 rounded-md text-[9px] font-mono tracking-wide backdrop-blur-md shadow-sm z-10">
+        {hostname}
+      </div>
+
+      {/* YouTube specific play icon overlay */}
+      {(hostname.includes("youtube.com") || hostname.includes("youtu.be")) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/5 group-hover:bg-black/20 transition-colors duration-300 z-5">
+          <div className="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-all duration-300">
+            <Play className="w-5 h-5 fill-white ml-0.5" />
+          </div>
+        </div>
+      )}
+
+      {/* Non-YouTube external link icon overlay on hover */}
+      {!(hostname.includes("youtube.com") || hostname.includes("youtu.be")) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition-colors duration-300 z-5">
+          <div className="opacity-0 group-hover:opacity-100 w-11 h-11 rounded-full bg-brand-600 text-slate-950 flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-all duration-300">
+            <ExternalLink className="w-4 h-4 stroke-[2.5]" />
+          </div>
+        </div>
+      )}
+    </a>
+  );
+}
+
+export function formatRelativeTime(createdAtString: string | undefined, fallbackTime?: string): string {
+  if (!createdAtString) return fallbackTime || "Şimdi";
+  const createdDate = new Date(createdAtString);
+  if (isNaN(createdDate.getTime())) return fallbackTime || "Şimdi";
+
+  const diffMs = Date.now() - createdDate.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+
+  if (diffMs < 0) {
+    return "Şimdi";
+  }
+  if (diffMins < 1) {
+    return "Şimdi";
+  }
+  if (diffHours < 1) {
+    return `${diffMins} dk. önce`;
+  }
+  if (diffDays < 1) {
+    return `${diffHours} sa. önce`;
+  }
+  return `${diffDays} gün önce`;
+}
 
 interface FeedProps {
   posts: Post[];
@@ -39,6 +275,7 @@ interface FeedProps {
   showOnlySaved: boolean;
   onClearSavedFilter: () => void;
   onAddStory?: (content: string, gradientClass: string, image?: string, video?: string, location?: string, textX?: number, textY?: number) => void;
+  onViewProfile?: (studentIdOrUsername: string, isStudentId: boolean) => void;
 }
 
 export default function Feed({ 
@@ -53,7 +290,8 @@ export default function Feed({
   onToggleSavePost,
   showOnlySaved = false,
   onClearSavedFilter,
-  onAddStory
+  onAddStory,
+  onViewProfile
 }: FeedProps) {
   const [newPostText, setNewPostText] = useState('');
   const [selectedField, setSelectedField] = useState(INTEREST_FIELDS[0].id);
@@ -501,7 +739,7 @@ export default function Feed({
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800/80">
         <div className="flex justify-between items-center mb-3 px-1">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Aktif Kampüs Hikayeleri</p>
-          <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1">
+          <span className="text-[10px] text-brand-700 dark:text-brand-500 font-bold flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
             Canlı Kampüs
           </span>
@@ -513,8 +751,8 @@ export default function Feed({
             onClick={() => setIsAddStoryOpen(true)}
             className="flex-shrink-0 flex flex-col items-center space-y-1.5 cursor-pointer group"
           >
-            <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-amber-400 dark:hover:border-amber-400 transition-colors">
-              <Plus className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-amber-400" />
+            <div className="w-14 h-14 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-600 hover:border-brand-500 dark:hover:border-brand-500 transition-colors">
+              <Plus className="w-5 h-5 text-slate-500 dark:text-slate-400 group-hover:text-brand-500" />
             </div>
             <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Hikaye Ekle</span>
           </div>
@@ -527,14 +765,14 @@ export default function Feed({
                 onClick={() => setActiveStoryIndex(index)}
                 className="flex-shrink-0 flex flex-col items-center space-y-1.5 cursor-pointer group animate-in fade-in zoom-in-95 duration-200"
               >
-                <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-amber-500 via-rose-500 to-indigo-500 transition transform group-hover:scale-105 duration-200">
+                <div className="w-14 h-14 rounded-full p-0.5 bg-gradient-to-tr from-brand-600 via-rose-500 to-indigo-500 transition transform group-hover:scale-105 duration-200">
                   <img 
                     src={story.authorAvatar} 
                     className="w-full h-full rounded-full border-2 border-white dark:border-slate-800 object-cover bg-slate-100 dark:bg-slate-800 shadow-inner"
                     alt={story.author}
                   />
                 </div>
-                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors max-w-[70px] truncate">
+                <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 group-hover:text-brand-700 dark:group-hover:text-brand-500 transition-colors max-w-[70px] truncate">
                   {story.author.split(' ')[0]}
                 </span>
               </div>
@@ -558,7 +796,7 @@ export default function Feed({
             onClick={() => setActiveTab('all')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeTab === 'all'
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-amber-400 shadow-sm'
+                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-brand-500 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
@@ -568,7 +806,7 @@ export default function Feed({
             onClick={() => setActiveTab('dept')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1 ${
               activeTab === 'dept'
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-amber-400 shadow-sm'
+                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-brand-500 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
@@ -578,7 +816,7 @@ export default function Feed({
             onClick={() => setActiveTab('clubs')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeTab === 'clubs'
-                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-amber-400 shadow-sm'
+                ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-brand-500 shadow-sm'
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
             }`}
           >
@@ -596,7 +834,7 @@ export default function Feed({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Akışta kelime, kulüp ara..."
-            className="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 pl-9 pr-4 text-xs text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 transition"
+            className="w-full bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700/60 rounded-xl py-2 pl-9 pr-4 text-xs text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition"
           />
         </div>
       </div>
@@ -606,7 +844,7 @@ export default function Feed({
         <form onSubmit={handleSharePostSubmit} className="space-y-3.5">
           <div className="flex gap-3 items-start">
             <img 
-              src={preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`} 
+              src={preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=f59e0b&color=003057`} 
               className="w-10 h-10 rounded-full border border-slate-200 dark:border-slate-700 object-cover"
               alt="Avatar"
             />
@@ -616,7 +854,7 @@ export default function Feed({
                 onChange={(e) => setNewPostText(e.target.value)}
                 placeholder="Davutpaşa veya Beşiktaş'ta ne oluyor? Kampüsle paylaş..."
                 rows={2}
-                className="w-full bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700/50 rounded-xl p-3 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400 resize-none transition"
+                className="w-full bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-700/50 rounded-xl p-3 text-sm text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 resize-none transition"
               />
 
               {/* Preview of Attached Image & Location */}
@@ -682,7 +920,7 @@ export default function Feed({
                   type="button"
                   onClick={handleGetGPSLocation}
                   disabled={isLocating}
-                  className="col-span-2 py-2 px-3 bg-amber-400 hover:bg-amber-500 disabled:bg-slate-200 dark:disabled:bg-slate-800 text-slate-950 disabled:text-slate-400 font-bold text-[11px] rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
+                  className="col-span-2 py-2 px-3 bg-brand-500 hover:bg-brand-600 disabled:bg-slate-200 dark:disabled:bg-slate-800 text-slate-950 disabled:text-slate-400 font-bold text-[11px] rounded-lg transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <MapPin className="w-3.5 h-3.5" />
                   {isLocating ? 'GPS Konumu Alınıyor...' : 'Mevcut GPS Konumumu Kullan'}
@@ -696,7 +934,7 @@ export default function Feed({
                       setAttachedLocation(loc);
                       setIsLocationMenuOpen(false);
                     }}
-                    className="p-2 text-left bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 hover:border-amber-400 dark:hover:border-amber-400 text-[11px] font-semibold text-slate-700 dark:text-slate-300 rounded-lg transition truncate cursor-pointer"
+                    className="p-2 text-left bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800/80 hover:border-brand-500 dark:hover:border-brand-500 text-[11px] font-semibold text-slate-700 dark:text-slate-300 rounded-lg transition truncate cursor-pointer"
                   >
                     {loc.replace("📍 ", "")}
                   </button>
@@ -713,7 +951,7 @@ export default function Feed({
               <select
                 value={selectedField}
                 onChange={(e) => setSelectedField(e.target.value)}
-                className="bg-slate-100 dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-amber-400 cursor-pointer"
+                className="bg-slate-100 dark:bg-slate-900 text-xs text-slate-700 dark:text-slate-300 font-semibold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 focus:outline-none focus:border-brand-500 cursor-pointer"
               >
                 {INTEREST_FIELDS.map(f => (
                   <option key={f.id} value={f.id}>{f.label}</option>
@@ -749,7 +987,7 @@ export default function Feed({
                 disabled={!newPostText.trim()}
                 className={`px-4.5 py-2.5 rounded-xl font-bold text-xs flex items-center gap-1.5 transition ${
                   newPostText.trim()
-                    ? 'bg-amber-400 text-slate-950 hover:bg-amber-500 shadow-md active:scale-[0.98]'
+                    ? 'bg-brand-500 text-slate-950 hover:bg-brand-600 shadow-md active:scale-[0.98]'
                     : 'bg-slate-100 dark:bg-slate-700 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                 }`}
               >
@@ -766,9 +1004,9 @@ export default function Feed({
         
         {/* If only saved posts filter is active, show a lovely banner */}
         {showOnlySaved && (
-          <div className="bg-amber-400/10 border border-amber-400/35 rounded-2xl p-4 text-xs flex items-center justify-between gap-3 shadow-sm">
+          <div className="bg-brand-500/10 border border-brand-500/35 rounded-2xl p-4 text-xs flex items-center justify-between gap-3 shadow-sm">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-amber-400 text-slate-900 rounded-xl font-bold shadow-inner">
+              <div className="p-2 bg-brand-500 text-slate-900 rounded-xl font-bold shadow-inner">
                 <Bookmark className="w-4 h-4 fill-slate-900" />
               </div>
               <div>
@@ -778,7 +1016,7 @@ export default function Feed({
             </div>
             <button
               onClick={onClearSavedFilter}
-              className="px-3.5 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-amber-400 dark:hover:bg-slate-700 font-bold rounded-xl transition shadow-sm cursor-pointer"
+              className="px-3.5 py-2 bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 text-brand-500 dark:hover:bg-slate-700 font-bold rounded-xl transition shadow-sm cursor-pointer"
             >
               Tüm Akışı Göster
             </button>
@@ -843,7 +1081,7 @@ export default function Feed({
                   {/* Pinned & Personalized Badges */}
                   <div className="flex items-center gap-1.5 mb-2.5">
                     {post.isPinned && (
-                      <span className="inline-flex items-center gap-1 text-[9px] bg-amber-400/10 text-amber-700 dark:text-amber-400 border border-amber-400/20 font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                      <span className="inline-flex items-center gap-1 text-[9px] bg-brand-500/10 text-brand-800 dark:text-brand-500 border border-brand-500/20 font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wider">
                         <Pin className="w-2.5 h-2.5" /> Sabitlendi
                       </span>
                     )}
@@ -862,16 +1100,30 @@ export default function Feed({
                     <div className="flex items-center gap-3">
                       <img 
                         src={post.authorAvatar} 
-                        className="w-10 h-10 rounded-full border border-slate-100 dark:border-slate-700/80"
+                        className={`w-10 h-10 rounded-full border border-slate-100 dark:border-slate-700/80 object-cover ${onViewProfile ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
                         alt={post.author}
+                        onClick={() => onViewProfile && onViewProfile(post.authorStudentId || post.author, !!post.authorStudentId)}
                       />
                       <div>
-                        <p className="text-sm font-bold text-slate-800 dark:text-amber-400 flex items-center gap-1.5">
-                          {post.author}
-                          {post.club && <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded">Kulüp</span>}
-                        </p>
-                        <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5 flex-wrap">
-                          <span>{post.time}</span>
+                        <div className="flex flex-col">
+                          <p 
+                            className={`text-sm font-bold text-slate-800 dark:text-brand-500 flex items-center gap-1.5 ${onViewProfile ? 'cursor-pointer hover:underline' : ''}`}
+                            onClick={() => onViewProfile && onViewProfile(post.authorStudentId || post.author, !!post.authorStudentId)}
+                          >
+                            {post.author}
+                            {post.club && <span className="text-[10px] bg-indigo-500/10 text-indigo-400 px-1.5 py-0.5 rounded">Kulüp</span>}
+                          </p>
+                          {post.authorStudentId && (
+                            <p 
+                              className={`text-[10px] font-semibold text-brand-700 dark:text-brand-500 leading-none mt-0.5 ${onViewProfile ? 'cursor-pointer hover:underline' : ''}`}
+                              onClick={() => onViewProfile && onViewProfile(post.authorStudentId, true)}
+                            >
+                              @{post.authorStudentId}
+                            </p>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1.5 flex-wrap">
+                          <span>{formatRelativeTime(post.createdAt, post.time)}</span>
                           {post.location && (
                             <>
                               <span className="text-slate-300 dark:text-slate-700">•</span>
@@ -887,9 +1139,31 @@ export default function Feed({
                   </div>
  
                   {/* Post Content */}
-                  <p className="text-slate-700 dark:text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">
-                    {post.content}
-                  </p>
+                  <div className="text-slate-700 dark:text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">
+                    {parseAndRenderContent(post.content)}
+                  </div>
+
+                  {/* Shared Link Preview */}
+                  {(() => {
+                    const firstUrl = extractFirstUrl(post.content);
+                    if (!firstUrl) return null;
+                    if (isImageUrl(firstUrl)) {
+                      return (
+                        <div 
+                          onClick={() => setPreviewImage(firstUrl)}
+                          className="mt-3 aspect-video w-full max-w-[550px] rounded-2xl overflow-hidden shadow-md hover:shadow-lg border border-slate-200/40 dark:border-slate-800/70 transition-all duration-300 hover:scale-[1.01] active:scale-[0.99] cursor-pointer bg-slate-100 dark:bg-slate-950/80"
+                        >
+                          <img 
+                            src={firstUrl} 
+                            className="w-full h-full object-cover" 
+                            alt="Paylaşılan Görsel" 
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                      );
+                    }
+                    return <LinkPreview url={firstUrl} />;
+                  })()}
 
                   {/* Attached Image if any */}
                   {post.image && (
@@ -955,12 +1229,12 @@ export default function Feed({
                       onClick={() => onToggleSavePost(post.id)}
                       className={`flex items-center space-x-1.5 text-xs font-semibold transition ml-auto group ${
                         isSaved 
-                          ? 'text-amber-600 dark:text-amber-400' 
-                          : 'text-slate-400 hover:text-amber-600 dark:hover:text-amber-400'
+                          ? 'text-brand-700 dark:text-brand-500' 
+                          : 'text-slate-400 hover:text-brand-700 dark:hover:text-brand-500'
                       }`}
                       title={isSaved ? "Kaydetmeyi Kaldır" : "Kaydet"}
                     >
-                      <Bookmark className={`w-4 h-4 transition duration-200 group-active:scale-[1.3] ${isSaved ? 'fill-amber-600 stroke-amber-600 dark:fill-amber-400 dark:stroke-amber-400' : ''}`} />
+                      <Bookmark className={`w-4 h-4 transition duration-200 group-active:scale-[1.3] ${isSaved ? 'fill-brand-700 stroke-brand-700 dark:fill-brand-500 dark:stroke-brand-500' : ''}`} />
                       <span>{isSaved ? 'Kaydedildi' : 'Kaydet'}</span>
                     </button>
                   </div>
@@ -986,13 +1260,29 @@ export default function Feed({
                               <div key={cmt.id} className="flex gap-2.5 items-start text-xs bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-xl border border-slate-100/50 dark:border-slate-800/50">
                                 <img 
                                   src={cmt.authorAvatar} 
-                                  className="w-7 h-7 rounded-full border border-slate-100 dark:border-slate-700/80"
+                                  className={`w-7 h-7 rounded-full border border-slate-100 dark:border-slate-700/80 object-cover ${onViewProfile ? 'cursor-pointer hover:opacity-85' : ''}`}
                                   alt={cmt.author}
+                                  onClick={() => onViewProfile && onViewProfile(cmt.authorStudentId || cmt.author, !!cmt.authorStudentId)}
                                 />
                                 <div className="flex-1">
-                                  <div className="flex justify-between items-center">
-                                    <span className="font-bold text-slate-800 dark:text-amber-400">@{cmt.author}</span>
-                                    <span className="text-[9px] text-slate-400">
+                                  <div className="flex justify-between items-start">
+                                    <div className="flex flex-col">
+                                      <span 
+                                        className={`font-bold text-slate-800 dark:text-brand-500 ${onViewProfile ? 'cursor-pointer hover:underline' : ''}`}
+                                        onClick={() => onViewProfile && onViewProfile(cmt.authorStudentId || cmt.author, !!cmt.authorStudentId)}
+                                      >
+                                        @{cmt.author}
+                                      </span>
+                                      {cmt.authorStudentId && (
+                                        <span 
+                                          className={`text-[9px] font-medium text-brand-700 dark:text-brand-500 leading-none mt-0.5 ${onViewProfile ? 'cursor-pointer hover:underline' : ''}`}
+                                          onClick={() => onViewProfile && onViewProfile(cmt.authorStudentId, true)}
+                                        >
+                                          @{cmt.authorStudentId}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <span className="text-[9px] text-slate-400 shrink-0">
                                       {cmt.createdAt ? new Date(cmt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Şimdi'}
                                     </span>
                                   </div>
@@ -1022,12 +1312,12 @@ export default function Feed({
                             value={commentDrafts[post.id] || ''}
                             onChange={(e) => setCommentDrafts(prev => ({ ...prev, [post.id]: e.target.value }))}
                             placeholder="Yorumunuzu yazın..."
-                            className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
+                            className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/80 rounded-xl px-3 py-2 text-xs text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-brand-500 placeholder:text-slate-400 dark:placeholder:text-slate-500"
                           />
                           <button
                             type="submit"
                             disabled={!(commentDrafts[post.id] || '').trim()}
-                            className="bg-amber-400 hover:bg-amber-500 dark:bg-amber-500 dark:hover:bg-amber-600 text-slate-900 font-bold px-3 py-2 rounded-xl transition-all flex items-center gap-1 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="bg-brand-500 hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-700 text-slate-900 font-bold px-3 py-2 rounded-xl transition-all flex items-center gap-1 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             <Send className="w-3.5 h-3.5" />
                             <span>Gönder</span>
@@ -1155,14 +1445,14 @@ export default function Feed({
 
                   <div className="flex items-center gap-2 z-10">
                     <img
-                      src={preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=EAAA00&color=003057`}
+                      src={preferences.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(preferences.username)}&background=f59e0b&color=003057`}
                       className="w-8 h-8 rounded-full border border-white/20 object-cover"
                       alt={preferences.username}
                     />
                     <div>
                       <p className="text-xs font-bold leading-none">@{preferences.username || "Yıldızlı"}</p>
                       {newStoryLocation ? (
-                        <p className="text-[9px] text-amber-300 font-semibold mt-1 flex items-center gap-0.5">
+                        <p className="text-[9px] text-brand-300 font-semibold mt-1 flex items-center gap-0.5">
                           <MapPin className="w-2.5 h-2.5 shrink-0" />
                           <span>{newStoryLocation.replace("📍 ", "")}</span>
                         </p>
@@ -1221,7 +1511,7 @@ export default function Feed({
                       onClick={() => setIsEmojiPickerOpen(!isEmojiPickerOpen)}
                       className={`text-xs flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all border ${
                         isEmojiPickerOpen 
-                          ? 'bg-amber-100 border-amber-300 text-amber-800 dark:bg-amber-950/50 dark:border-amber-800/80 dark:text-amber-300 font-bold' 
+                          ? 'bg-brand-100 border-brand-300 text-brand-900 dark:bg-brand-950/50 dark:border-brand-900/80 dark:text-brand-300 font-bold' 
                           : 'bg-slate-50 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700/80 text-slate-600 dark:text-slate-300'
                       }`}
                     >
@@ -1239,7 +1529,7 @@ export default function Feed({
                     }}
                     placeholder="Bir şeyler yazın... (Örn: Bugün kütüphanede yer yok!)"
                     rows={3}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs text-slate-800 dark:text-white mt-1 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none transition"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 text-xs text-slate-800 dark:text-white mt-1 focus:outline-none focus:ring-1 focus:ring-brand-600 resize-none transition"
                   />
                   <div className="flex justify-end mt-0.5">
                     <span className="text-[10px] text-slate-400">{newStoryText.length}/150</span>
@@ -1333,14 +1623,14 @@ export default function Feed({
                               type="button"
                               disabled={isStoryLocating}
                               onClick={handleStoryGPSLocation}
-                              className="w-full text-left px-3 py-2 hover:bg-amber-50 dark:hover:bg-amber-950/30 text-xs font-extrabold text-amber-600 dark:text-amber-400 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+                              className="w-full text-left px-3 py-2 hover:bg-brand-50 dark:hover:bg-brand-950/30 text-xs font-extrabold text-brand-700 dark:text-brand-500 rounded-lg flex items-center gap-1.5 transition cursor-pointer"
                             >
                               <MapPin className="w-3.5 h-3.5 animate-bounce" />
                               <span>{isStoryLocating ? "Konum Alınıyor..." : "📍 GPS ile Konumumu Bul"}</span>
                             </button>
                             
                             {storyGpsError && (
-                              <p className="text-[10px] text-red-500 px-3 py-1 font-medium">{storyGpsError}</p>
+                              <p className="text-[10px] text-brand-500 px-3 py-1 font-medium">{storyGpsError}</p>
                             )}
                             
                             <div className="border-t border-slate-100 dark:border-slate-700 my-1.5" />
@@ -1392,7 +1682,7 @@ export default function Feed({
                           <button
                             type="button"
                             onClick={() => setNewStoryImage(null)}
-                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-red-500 transition cursor-pointer"
+                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-brand-500 transition cursor-pointer"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -1408,7 +1698,7 @@ export default function Feed({
                           <button
                             type="button"
                             onClick={() => setNewStoryVideo(null)}
-                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-red-500 transition cursor-pointer"
+                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-brand-500 transition cursor-pointer"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -1424,7 +1714,7 @@ export default function Feed({
                           <button
                             type="button"
                             onClick={() => setNewStoryLocation(null)}
-                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-red-500 transition cursor-pointer"
+                            className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-brand-500 transition cursor-pointer"
                           >
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -1441,17 +1731,17 @@ export default function Feed({
                     <div className="grid grid-cols-6 gap-2 mt-1.5">
                       {[
                         "from-blue-600 via-indigo-600 to-purple-600",
-                        "from-amber-500 via-rose-500 to-indigo-500",
+                        "from-brand-600 via-rose-500 to-indigo-500",
                         "from-teal-500 to-emerald-500",
-                        "from-pink-500 via-red-500 to-yellow-500",
+                        "from-pink-500 via-brand-500 to-yellow-500",
                         "from-slate-800 via-slate-900 to-indigo-950",
-                        "from-amber-400 to-amber-700"
+                        "from-brand-500 to-brand-800"
                       ].map((grad, i) => (
                         <button
                           key={i}
                           type="button"
                           onClick={() => setSelectedGradient(grad)}
-                          className={`aspect-square rounded-xl bg-gradient-to-tr ${grad} transition-all transform hover:scale-105 ${selectedGradient === grad ? 'ring-2 ring-amber-400 dark:ring-amber-400 ring-offset-2 dark:ring-offset-slate-900 scale-105' : 'opacity-80'}`}
+                          className={`aspect-square rounded-xl bg-gradient-to-tr ${grad} transition-all transform hover:scale-105 ${selectedGradient === grad ? 'ring-2 ring-brand-500 dark:ring-brand-500 ring-offset-2 dark:ring-offset-slate-900 scale-105' : 'opacity-80'}`}
                         />
                       ))}
                     </div>
@@ -1505,7 +1795,7 @@ export default function Feed({
                       setTextX(50);
                       setTextY(50);
                     }}
-                    className="flex-1 bg-amber-400 hover:bg-amber-500 dark:bg-amber-500 dark:hover:bg-amber-600 text-slate-900 font-extrabold py-3 rounded-xl transition flex items-center justify-center gap-1.5 text-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 bg-brand-500 hover:bg-brand-600 dark:bg-brand-600 dark:hover:bg-brand-700 text-slate-900 font-extrabold py-3 rounded-xl transition flex items-center justify-center gap-1.5 text-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Sparkles className="w-4 h-4" />
                     Paylaş
@@ -1604,7 +1894,16 @@ export default function Feed({
 
                 {/* User Info & Close */}
                 <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2.5">
+                  <div 
+                    className={`flex items-center gap-2.5 z-35 ${onViewProfile ? 'cursor-pointer hover:opacity-85' : ''}`}
+                    onClick={() => {
+                      if (onViewProfile && stories[activeStoryIndex]) {
+                        const story = stories[activeStoryIndex];
+                        setActiveStoryIndex(null);
+                        onViewProfile(story.authorStudentId || story.author, !!story.authorStudentId);
+                      }
+                    }}
+                  >
                     <img
                       src={stories[activeStoryIndex]?.authorAvatar}
                       className="w-9 h-9 rounded-full border border-white/20 object-cover"
@@ -1612,25 +1911,20 @@ export default function Feed({
                     />
                     <div>
                       <p className="text-sm font-black leading-none">@{stories[activeStoryIndex]?.author}</p>
-                      <div className="flex flex-col gap-0.5 mt-1">
+                      {stories[activeStoryIndex]?.authorStudentId && (
+                        <p className="text-[10px] font-medium text-brand-300 mt-1 leading-none">
+                          @{stories[activeStoryIndex]?.authorStudentId}
+                        </p>
+                      )}
+                      <div className="flex flex-col gap-0.5 mt-1.5">
                         {stories[activeStoryIndex]?.location && (
-                          <span className="text-[10px] text-amber-300 font-bold flex items-center gap-0.5">
+                          <span className="text-[10px] text-brand-300 font-bold flex items-center gap-0.5">
                             <MapPin className="w-3 h-3 shrink-0" />
                             {stories[activeStoryIndex].location.replace("📍 ", "")}
                           </span>
                         )}
                         <span className="text-[9px] text-white/60">
-                          {(() => {
-                            const timeStr = stories[activeStoryIndex]?.createdAt;
-                            if (!timeStr) return "Şimdi";
-                            const diff = Date.now() - new Date(timeStr).getTime();
-                            const hrs = Math.floor(diff / (3600 * 1000));
-                            if (hrs < 1) {
-                              const mins = Math.floor(diff / (60 * 1000));
-                              return `${mins > 0 ? mins : 1} dakika önce`;
-                            }
-                            return `${hrs} saat önce`;
-                          })()}
+                          {formatRelativeTime(stories[activeStoryIndex]?.createdAt, "Şimdi")}
                         </span>
                       </div>
                     </div>

@@ -175,7 +175,7 @@ export default function ExamWidget({ department, isFilteredOut, onRestore }: Exa
         </p>
         <button
           onClick={onRestore}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-amber-400 hover:text-slate-900 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold transition"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 dark:bg-slate-800 hover:bg-brand-500 hover:text-slate-900 text-slate-700 dark:text-slate-300 rounded-lg text-[10px] font-bold transition"
         >
           <Eye className="w-3.5 h-3.5" />
           Filtreyi Kaldır
@@ -186,13 +186,13 @@ export default function ExamWidget({ department, isFilteredOut, onRestore }: Exa
 
   return (
     <>
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800/80 border-t-4 border-t-red-500 transition hover:shadow-md relative overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800/80 border-t-4 border-t-brand-500 transition hover:shadow-md relative overflow-hidden">
         <div className="flex justify-between items-center mb-3">
           <h3 className="font-bold text-xs text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar className="w-4 h-4 text-red-500" />
+            <Calendar className="w-4 h-4 text-brand-500" />
             Kişisel Sınav Takvimi
           </h3>
-          <span className="text-[10px] bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 font-bold px-1.5 py-0.5 rounded">
+          <span className="text-[10px] bg-brand-100 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 font-bold px-1.5 py-0.5 rounded">
             {filteredExams.length} Sınav
           </span>
         </div>
@@ -205,7 +205,7 @@ export default function ExamWidget({ department, isFilteredOut, onRestore }: Exa
           <div className="space-y-3">
             {filteredExams.slice(0, 3).map((exam) => (
               <div key={exam.id} className="flex items-center space-x-3 bg-slate-50 dark:bg-slate-950/40 p-2 rounded-xl border border-slate-100 dark:border-slate-800/60">
-                <div className="bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 p-2 rounded-lg text-center min-w-[45px] border border-red-100/50 dark:border-red-900/20">
+                <div className="bg-brand-50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400 p-2 rounded-lg text-center min-w-[45px] border border-brand-100/50 dark:border-brand-900/20">
                   <p className="text-[9px] font-bold uppercase">{exam.month}</p>
                   <p className="text-base font-black leading-none mt-0.5">{exam.date}</p>
                 </div>
@@ -225,7 +225,7 @@ export default function ExamWidget({ department, isFilteredOut, onRestore }: Exa
         <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-950/50 rounded-xl border border-slate-100 dark:border-slate-800/60 transition">
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-1.5">
-              <div className="p-1 rounded bg-amber-400/10 text-amber-500">
+              <div className="p-1 rounded bg-brand-500/10 text-brand-600">
                 <Bell className={`w-3.5 h-3.5 ${permissionStatus === 'granted' && !localMuted ? 'animate-bounce' : ''}`} />
               </div>
               <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Anlık Sınav Bildirimi</span>
@@ -236,7 +236,7 @@ export default function ExamWidget({ department, isFilteredOut, onRestore }: Exa
                 ? localMuted
                   ? 'bg-slate-200 dark:bg-slate-800 text-slate-500'
                   : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
-                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                : 'bg-brand-600/10 text-brand-700 dark:text-brand-500 border border-brand-600/20'
             }`}>
               {permissionStatus === 'granted' ? (localMuted ? 'Sessiz' : 'Aktif') : 'Devre Dışı'}
             </span>
@@ -254,7 +254,7 @@ export default function ExamWidget({ department, isFilteredOut, onRestore }: Exa
             {permissionStatus !== 'granted' ? (
               <button
                 onClick={requestNotificationPermission}
-                className="w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-amber-400 hover:bg-amber-500 text-slate-950 rounded-xl text-[10px] font-extrabold transition cursor-pointer shadow-sm shadow-amber-400/10 animate-pulse"
+                className="w-full flex items-center justify-center gap-1.5 py-2 px-3 bg-brand-500 hover:bg-brand-600 text-slate-950 rounded-xl text-[10px] font-extrabold transition cursor-pointer shadow-sm shadow-brand-500/10 animate-pulse"
               >
                 <Bell className="w-3.5 h-3.5" />
                 Bildirim İzni İste
@@ -284,7 +284,7 @@ export default function ExamWidget({ department, isFilteredOut, onRestore }: Exa
 
                 <button
                   onClick={() => pushUpcomingExamNotifications(false)}
-                  className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-[10px] font-extrabold transition cursor-pointer shadow-sm shadow-red-500/10"
+                  className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg text-[10px] font-extrabold transition cursor-pointer shadow-sm shadow-brand-500/10"
                 >
                   <Send className="w-3 h-3" />
                   Test Bildirimi Gönder
@@ -312,16 +312,16 @@ export default function ExamWidget({ department, isFilteredOut, onRestore }: Exa
             className="fixed bottom-6 right-6 z-[9999] max-w-sm w-full bg-slate-900/95 dark:bg-slate-950/98 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-800 text-white p-4 overflow-hidden"
           >
             {/* Ambient accent background glow */}
-            <div className="absolute top-0 right-0 w-24 h-24 bg-red-500/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute top-0 right-0 w-24 h-24 bg-brand-500/10 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-brand-600/10 rounded-full blur-2xl pointer-events-none" />
 
             <div className="flex items-start gap-3">
               {/* App Avatar */}
               <div className="relative flex-shrink-0">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-400 to-amber-600 flex items-center justify-center font-black text-slate-950 text-sm shadow-md shadow-amber-500/20">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-500 to-brand-700 flex items-center justify-center font-black text-slate-950 text-sm shadow-md shadow-brand-600/20">
                   YTÜ
                 </div>
-                <div className="absolute -bottom-1 -right-1 bg-red-500 text-white rounded-full p-0.5 border border-slate-900">
+                <div className="absolute -bottom-1 -right-1 bg-brand-500 text-white rounded-full p-0.5 border border-slate-900">
                   <Sparkles className="w-2.5 h-2.5" />
                 </div>
               </div>
@@ -329,7 +329,7 @@ export default function ExamWidget({ department, isFilteredOut, onRestore }: Exa
               {/* Text content */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between gap-1.5">
-                  <p className="text-xs font-black text-amber-400 truncate tracking-wide">{toast.title}</p>
+                  <p className="text-xs font-black text-brand-500 truncate tracking-wide">{toast.title}</p>
                   <button
                     onClick={() => setToast(null)}
                     className="text-slate-500 hover:text-white transition p-0.5 rounded"
@@ -351,7 +351,7 @@ export default function ExamWidget({ department, isFilteredOut, onRestore }: Exa
                   </span>
                   
                   {toast.isSimulated && (
-                    <span className="inline-flex items-center gap-0.5 text-amber-400 font-bold hover:underline cursor-pointer">
+                    <span className="inline-flex items-center gap-0.5 text-brand-500 font-bold hover:underline cursor-pointer">
                       Sekmede Aç
                       <ExternalLink className="w-2 h-2" />
                     </span>
@@ -365,7 +365,7 @@ export default function ExamWidget({ department, isFilteredOut, onRestore }: Exa
               initial={{ width: "100%" }}
               animate={{ width: "0%" }}
               transition={{ duration: 6, ease: "linear" }}
-              className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-red-500 via-amber-400 to-red-500"
+              className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-brand-500 via-brand-500 to-brand-500"
             />
           </motion.div>
         )}
