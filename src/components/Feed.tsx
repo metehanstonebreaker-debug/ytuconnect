@@ -32,11 +32,11 @@ import {
   Play
 } from 'lucide-react';
 
-export function parseAndRenderContent(content: string) {
+export function parseAndRenderContent(content: string, onHashtagClick?: (hashtag: string) => void, onMentionClick?: (username: string) => void) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const parts = content.split(urlRegex);
   
-  if (parts.length === 1) {
+  if (parts.length === 1 && !content.match(/#[a-zA-Z0-9_ğüşöçİĞÜŞÖÇıI]+/g) && !content.match(/@[a-zA-Z0-9_ğüşöçİĞÜŞÖÇıI]+/g)) {
     return <span>{content}</span>;
   }
 
@@ -46,7 +46,7 @@ export function parseAndRenderContent(content: string) {
         if (part.match(urlRegex)) {
           return (
             <a 
-              key={index} 
+              key={`url-${index}`} 
               href={part} 
               target="_blank" 
               rel="noopener noreferrer" 
@@ -57,7 +57,45 @@ export function parseAndRenderContent(content: string) {
             </a>
           );
         }
-        return <span key={index}>{part}</span>;
+        
+        // Parse hashtags and mentions in the remaining text
+        const tokenRegex = /(#[a-zA-Z0-9_ğüşöçİĞÜŞÖÇıI]+|@[a-zA-Z0-9_ğüşöçİĞÜŞÖÇıI]+)/g;
+        const textParts = part.split(tokenRegex);
+        
+        return textParts.map((tPart, tIndex) => {
+          if (tPart.startsWith('#')) {
+            return (
+              <span
+                key={`token-${index}-${tIndex}`}
+                className="text-brand-600 dark:text-brand-400 font-semibold cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onHashtagClick) {
+                    onHashtagClick(tPart);
+                  }
+                }}
+              >
+                {tPart}
+              </span>
+            );
+          } else if (tPart.startsWith('@')) {
+            return (
+              <span
+                key={`token-${index}-${tIndex}`}
+                className="text-blue-600 dark:text-blue-400 font-bold cursor-pointer hover:underline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (onMentionClick) {
+                    onMentionClick(tPart.substring(1));
+                  }
+                }}
+              >
+                {tPart}
+              </span>
+            );
+          }
+          return <span key={`text-${index}-${tIndex}`}>{tPart}</span>;
+        });
       })}
     </>
   );
@@ -276,6 +314,8 @@ interface FeedProps {
   onClearSavedFilter: () => void;
   onAddStory?: (content: string, gradientClass: string, image?: string, video?: string, location?: string, textX?: number, textY?: number) => void;
   onViewProfile?: (studentIdOrUsername: string, isStudentId: boolean) => void;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
 }
 
 export default function Feed({ 
@@ -291,11 +331,12 @@ export default function Feed({
   showOnlySaved = false,
   onClearSavedFilter,
   onAddStory,
-  onViewProfile
+  onViewProfile,
+  searchQuery,
+  setSearchQuery
 }: FeedProps) {
   const [newPostText, setNewPostText] = useState('');
   const [selectedField, setSelectedField] = useState(INTEREST_FIELDS[0].id);
-  const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'dept' | 'clubs'>('all');
 
   // Track expanded comments section per post, and active draft per post
@@ -839,6 +880,23 @@ export default function Feed({
         </div>
       </div>
 
+      {/* Active Filter Indicator */}
+      {searchQuery.trim() && (
+        <div className="flex items-center gap-2 px-1">
+          <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Arama Sonuçları:</span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-brand-100 dark:bg-brand-900/40 text-brand-700 dark:text-brand-400 text-xs font-bold border border-brand-200 dark:border-brand-800/50">
+            {searchQuery}
+            <button 
+              onClick={() => setSearchQuery('')}
+              className="hover:bg-brand-200 dark:hover:bg-brand-800 p-0.5 rounded-full transition-colors focus:outline-none"
+              title="Aramayı Temizle"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </span>
+        </div>
+      )}
+
       {/* 3. SHARING BOX */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm p-4 border border-slate-100 dark:border-slate-800/80">
         <form onSubmit={handleSharePostSubmit} className="space-y-3.5">
@@ -1140,7 +1198,7 @@ export default function Feed({
  
                   {/* Post Content */}
                   <div className="text-slate-700 dark:text-slate-200 text-sm leading-relaxed whitespace-pre-wrap">
-                    {parseAndRenderContent(post.content)}
+                    {parseAndRenderContent(post.content, setSearchQuery, (username) => onViewProfile && onViewProfile(username, false))}
                   </div>
 
                   {/* Shared Link Preview */}
@@ -1286,8 +1344,8 @@ export default function Feed({
                                       {cmt.createdAt ? new Date(cmt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Şimdi'}
                                     </span>
                                   </div>
-                                  <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-                                    {cmt.content}
+                                  <p className="text-slate-600 dark:text-slate-300 mt-1 leading-relaxed whitespace-pre-wrap">
+                                    {parseAndRenderContent(cmt.content, setSearchQuery, (username) => onViewProfile && onViewProfile(username, false))}
                                   </p>
                                 </div>
                               </div>

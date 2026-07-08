@@ -37,6 +37,8 @@ interface UserProfileModalProps {
   savedPostIds: string[];
   onDeletePost?: (postId: string) => void;
   onDeleteComment?: (postId: string, commentId: string) => void;
+  onHashtagClick?: (hashtag: string) => void;
+  onViewProfile?: (studentIdOrUsername: string, isStudentId: boolean) => void;
 }
 
 export default function UserProfileModal({
@@ -49,7 +51,9 @@ export default function UserProfileModal({
   onToggleSavePost,
   savedPostIds,
   onDeletePost,
-  onDeleteComment
+  onDeleteComment,
+  onHashtagClick,
+  onViewProfile
 }: UserProfileModalProps) {
   const [activeTab, setActiveTab] = useState<'posts' | 'comments' | 'about'>('posts');
   const [isFriend, setIsFriend] = useState(false);
@@ -318,7 +322,7 @@ export default function UserProfileModal({
 
                         {/* Post content */}
                         <p className="text-slate-700 dark:text-slate-200 text-xs leading-relaxed whitespace-pre-wrap">
-                          {parseAndRenderContent(post.content)}
+                          {parseAndRenderContent(post.content, onHashtagClick, (username) => onViewProfile && onViewProfile(username, false))}
                         </p>
 
                         {/* Extracted link preview if any */}
@@ -415,8 +419,8 @@ export default function UserProfileModal({
                       </div>
 
                       {/* Comment text */}
-                      <p className="text-slate-800 dark:text-slate-200 text-xs font-semibold leading-relaxed pl-1.5 border-l-2 border-brand-500">
-                        {comment.content}
+                      <p className="text-slate-800 dark:text-slate-200 text-xs font-semibold leading-relaxed pl-1.5 border-l-2 border-brand-500 whitespace-pre-wrap">
+                        {parseAndRenderContent(comment.content, onHashtagClick, (username) => onViewProfile && onViewProfile(username, false))}
                       </p>
                     </div>
                   ))

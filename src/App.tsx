@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import Onboarding from './components/Onboarding';
 import SettingsPanel from './components/SettingsPanel';
 import Feed from './components/Feed';
@@ -15,7 +15,7 @@ import GpaCalculator from './components/GpaCalculator';
 import UserProfileModal from './components/UserProfileModal';
 import { applyThemeColor } from './lib/theme';
 import { UserPreferences, Post, Story, RegisteredUser } from './types';
-import { MOCK_POSTS, DEPARTMENTS } from './mockData';
+import { DEPARTMENTS } from './mockData';
 import { collection, onSnapshot, query, orderBy, addDoc, doc, updateDoc, setDoc, deleteDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from './firebase';
 import { 
@@ -168,55 +168,27 @@ export default function App() {
     const q = query(postsRef, orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      if (snapshot.empty) {
-        console.log("Cloud database is empty. Seeding with official default posts...");
-        for (let i = 0; i < MOCK_POSTS.length; i++) {
-          const mockPost = MOCK_POSTS[i];
-          const mockDocId = mockPost.id;
-          const docRef = doc(db, 'posts', mockDocId);
-          
-          try {
-            await setDoc(docRef, {
-              author: mockPost.author,
-              authorAvatar: mockPost.authorAvatar,
-              time: mockPost.time,
-              content: mockPost.content,
-              likes: mockPost.likes || 0,
-              field: mockPost.field,
-              department: mockPost.department || null,
-              club: mockPost.club || null,
-              isPinned: mockPost.isPinned || false,
-              image: mockPost.image || null,
-              location: mockPost.location || null,
-              createdAt: new Date(Date.now() - 3600000 * i).toISOString() // space them out
-            });
-          } catch (err) {
-            handleFirestoreError(err, OperationType.WRITE, `posts/${mockDocId}`);
-          }
-        }
-      } else {
-        const fetchedList: Post[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          fetchedList.push({
-            id: doc.id,
-            author: data.author,
-            authorAvatar: data.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.author)}`,
-            time: data.time || "Şimdi",
-            content: data.content,
-            likes: data.likes || 0,
-            field: data.field,
-            department: data.department || undefined,
-            club: data.club || undefined,
-            isPinned: data.isPinned || false,
-            image: data.image || undefined,
-            location: data.location || undefined,
-            comments: data.comments || [],
-            createdAt: data.createdAt || new Date().toISOString()
-          });
+      const fetchedList: Post[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        fetchedList.push({
+          id: doc.id,
+          author: data.author,
+          authorAvatar: data.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.author)}`,
+          time: data.time || "Şimdi",
+          content: data.content,
+          likes: data.likes || 0,
+          field: data.field,
+          department: data.department || undefined,
+          club: data.club || undefined,
+          isPinned: data.isPinned || false,
+          image: data.image || undefined,
+          location: data.location || undefined,
+          comments: data.comments || [],
+          createdAt: data.createdAt || new Date().toISOString()
         });
-        setRawPosts(fetchedList);
-      }
+      });
+      setRawPosts(fetchedList);
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'posts');
     });
@@ -230,64 +202,29 @@ export default function App() {
     const q = query(storiesRef, orderBy('createdAt', 'desc'));
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
-      if (snapshot.empty) {
-        console.log("Cloud stories database is empty. Seeding some initial stories...");
-        const initialStories = [
-          {
-            author: "SKY LAB Kulübü",
-            authorAvatar: "https://ui-avatars.com/api/?name=SKY+LAB&background=003057&color=f59e0b",
-            content: "Yarın saat 14:00'te online Python workshopu var, kaçırmayın! 💻",
-            gradientClass: "from-blue-600 via-indigo-600 to-purple-600",
-            createdAt: new Date().toISOString()
-          },
-          {
-            author: "Müzik Kulübü",
-            authorAvatar: "https://ui-avatars.com/api/?name=Muzik&background=f59e0b&color=003057",
-            content: "Beşiktaş Kampüsü orta bahçede akustik dinletimiz başladı! 🎸✨",
-            gradientClass: "from-brand-600 via-rose-500 to-indigo-500",
-            createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString()
-          },
-          {
-            author: "IEEE YTÜ",
-            authorAvatar: "https://ui-avatars.com/api/?name=IEEE&background=003057&color=f59e0b",
-            content: "Sektör Günleri etkinliği için kayıtlar açıldı! Link bio'da. ⚡🚀",
-            gradientClass: "from-teal-500 to-emerald-500",
-            createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString()
-          }
-        ];
-
-        for (const story of initialStories) {
-          try {
-            await addDoc(storiesRef, story);
-          } catch (err) {
-            console.error("Error seeding story:", err);
-          }
+      const fetchedStories: Story[] = [];
+      snapshot.forEach((doc) => {
+        const data = doc.data();
+        // Filter out stories older than 24 hours
+        const createdAtTime = new Date(data.createdAt).getTime();
+        const isExpired = Date.now() - createdAtTime > 24 * 3600 * 1000;
+        if (!isExpired) {
+          fetchedStories.push({
+            id: doc.id,
+            author: data.author,
+            authorAvatar: data.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.author)}`,
+            content: data.content,
+            createdAt: data.createdAt,
+            gradientClass: data.gradientClass || "from-slate-700 to-slate-900",
+            image: data.image || undefined,
+            video: data.video || undefined,
+            location: data.location || undefined,
+            textX: data.textX !== undefined ? data.textX : 50,
+            textY: data.textY !== undefined ? data.textY : 50
+          });
         }
-      } else {
-        const fetchedStories: Story[] = [];
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          // Filter out stories older than 24 hours
-          const createdAtTime = new Date(data.createdAt).getTime();
-          const isExpired = Date.now() - createdAtTime > 24 * 3600 * 1000;
-          if (!isExpired) {
-            fetchedStories.push({
-              id: doc.id,
-              author: data.author,
-              authorAvatar: data.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.author)}`,
-              content: data.content,
-              createdAt: data.createdAt,
-              gradientClass: data.gradientClass || "from-slate-700 to-slate-900",
-              image: data.image || undefined,
-              video: data.video || undefined,
-              location: data.location || undefined,
-              textX: data.textX !== undefined ? data.textX : 50,
-              textY: data.textY !== undefined ? data.textY : 50
-            });
-          }
-        });
-        setRawStories(fetchedStories);
-      }
+      });
+      setRawStories(fetchedStories);
     }, (error) => {
       handleFirestoreError(error, OperationType.GET, 'stories');
     });
@@ -357,21 +294,12 @@ export default function App() {
     let foundUser = registeredUsers.find(u => 
       isStudentId 
         ? u.studentId === studentIdOrUsername 
-        : u.username === studentIdOrUsername || u.studentId === studentIdOrUsername
+        : u.username.toLowerCase() === studentIdOrUsername.toLowerCase() || u.studentId === studentIdOrUsername
     );
 
     if (!foundUser) {
-      const postWithAuthor = posts.find(p => p.author === studentIdOrUsername || p.authorStudentId === studentIdOrUsername);
-      foundUser = {
-        studentId: isStudentId ? studentIdOrUsername : (postWithAuthor?.authorStudentId || "Kampüs Sakini"),
-        username: !isStudentId ? studentIdOrUsername : (postWithAuthor?.author || studentIdOrUsername),
-        avatar: postWithAuthor?.authorAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(studentIdOrUsername)}&background=f59e0b&color=003057`,
-        department: postWithAuthor?.department || "Yıldız Teknik Üniversitesi",
-        interestedFields: postWithAuthor?.field ? [postWithAuthor.field] : [],
-        interestedClubs: [],
-        bio: "Bu kullanıcının detaylı profil bilgileri henüz tanımlanmamış.",
-        createdAt: new Date().toISOString()
-      };
+      alert("Böyle bir kullanıcı bulunamadı.");
+      return;
     }
 
     setSelectedUserProfile(foundUser);
@@ -498,6 +426,27 @@ export default function App() {
   });
 
   const [showOnlySaved, setShowOnlySaved] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+
+  const trendingHashtags = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const hashtagRegex = /(#[a-zA-Z0-9_ğüşöçİĞÜŞÖÇıI]+)/g;
+    
+    posts.forEach(post => {
+      const matches = post.content.match(hashtagRegex);
+      if (matches) {
+        // Use a Set to only count each hashtag once per post, to prevent spamming
+        const uniqueMatches = Array.from(new Set(matches.map(t => t.toLowerCase())));
+        uniqueMatches.forEach(tag => {
+          counts[tag] = (counts[tag] || 0) + 1;
+        });
+      }
+    });
+
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5); // top 5
+  }, [posts]);
 
   const handleToggleSavePost = (postId: string) => {
     setSavedPostIds(prev => {
@@ -636,8 +585,14 @@ export default function App() {
             <input 
               type="text" 
               placeholder="Kampüste bir şey ara..." 
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                if (e.target.value.trim() && currentTab !== 'feed') {
+                  setCurrentTab('feed');
+                }
+              }}
               className="bg-transparent border-none outline-none px-2 text-xs w-full text-slate-800 dark:text-white placeholder-slate-400"
-              onClick={() => alert("Hızlı arama için lütfen aşağıdaki filtre çubuğunu kullanın.")}
             />
           </div>
 
@@ -908,6 +863,8 @@ export default function App() {
                 onClearSavedFilter={() => setShowOnlySaved(false)}
                 onAddStory={handleAddStory}
                 onViewProfile={handleViewProfile}
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
               />
             ) : (
               <DiscoverUsers 
@@ -941,18 +898,28 @@ export default function App() {
                 Kampüste Bugün Popüler
               </h3>
               <div className="space-y-3 text-xs">
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600 dark:text-slate-400 font-medium">#yildiz_hack_26</span>
-                  <span className="text-[10px] font-bold text-brand-500 bg-brand-500/5 px-2 py-0.5 rounded">134 paylaşım</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600 dark:text-slate-400 font-medium">#davutpasa_ring_sirasi</span>
-                  <span className="text-[10px] font-bold text-brand-500 bg-brand-500/5 px-2 py-0.5 rounded">98 paylaşım</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-slate-600 dark:text-slate-400 font-medium">#teknopark_staj</span>
-                  <span className="text-[10px] font-bold text-brand-500 bg-brand-500/5 px-2 py-0.5 rounded">75 paylaşım</span>
-                </div>
+                {trendingHashtags.length > 0 ? (
+                  trendingHashtags.map(([tag, count], idx) => (
+                    <div key={idx} className="flex justify-between items-center">
+                      <span 
+                        className="text-slate-600 dark:text-slate-400 font-medium cursor-pointer hover:text-brand-500 transition-colors"
+                        onClick={() => {
+                          setSearchQuery(tag);
+                          setCurrentTab('feed');
+                        }}
+                      >
+                        {tag}
+                      </span>
+                      <span className="text-[10px] font-bold text-brand-500 bg-brand-500/5 px-2 py-0.5 rounded">
+                        {count} paylaşım
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-slate-400 dark:text-slate-500 italic text-[11px]">
+                    Henüz popüler bir etiket yok.
+                  </p>
+                )}
               </div>
             </div>
           </aside>
@@ -1090,6 +1057,12 @@ export default function App() {
           savedPostIds={savedPostIds}
           onDeletePost={handleDeletePost}
           onDeleteComment={handleDeleteComment}
+          onHashtagClick={(hashtag) => {
+            setSearchQuery(hashtag);
+            setIsUserProfileModalOpen(false);
+            setCurrentTab('feed');
+          }}
+          onViewProfile={handleViewProfile}
         />
       )}
 
